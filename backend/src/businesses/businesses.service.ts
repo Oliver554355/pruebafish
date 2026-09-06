@@ -33,7 +33,7 @@ export class BusinessesService {
   }
 
   findMany(query: ListBusinessesDto) {
-    const where: Prisma.BusinessWhereInput = {};
+    const where: Prisma.BusinessWhereInput = { hidden: false };
     if (query.category) where.category = query.category;
     if (query.locationId) where.locationId = query.locationId;
     return this.prisma.business.findMany({
@@ -57,6 +57,7 @@ export class BusinessesService {
         ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
         ${radius}
       )
+      AND hidden = false
       ${category ? Prisma.sql`AND category = ${category}::"BusinessCategory"` : Prisma.empty}
       ORDER BY distance ASC
       LIMIT ${limit};
@@ -71,7 +72,7 @@ export class BusinessesService {
     // tipo "4.6/5": la calculamos de los Comment con rating, sin necesitar
     // una tabla "reviews" separada.
     const ratingAgg = await this.prisma.comment.aggregate({
-      where: { businessId: id, rating: { not: null } },
+      where: { businessId: id, rating: { not: null }, hidden: false },
       _avg: { rating: true },
       _count: { rating: true },
     });

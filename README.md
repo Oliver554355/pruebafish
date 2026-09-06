@@ -15,7 +15,9 @@ el directorio de negocios/lugares (`POST /businesses`, `GET
 /businesses/nearby`, `GET /businesses`, `GET /businesses/:id`, `PATCH
 /businesses/:id`), y comentarios/reacciones sobre posts o negocios (`POST
 /comments`, `GET /comments`, `DELETE /comments/:id`, `POST /reactions`, `GET
-/reactions/summary`).
+/reactions/summary`), y reportes/moderación básica (`POST /reports`, `GET
+/reports` y `PATCH /reports/:id` — estos dos últimos solo para usuarios con
+`isModerator = true`).
 
 ### Levantar en local
 
@@ -76,4 +78,19 @@ curl -X POST localhost:3000/reactions -H "Content-Type: application/json" \
   -d '{"postId":"<POST_ID>"}'
 
 curl "localhost:3000/reactions/summary?postId=<POST_ID>"
+
+# Reportar un post
+curl -X POST localhost:3000/reports -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"postId":"<POST_ID>","reason":"INFORMACION_FALSA","description":"El accidente ya se resolvio"}'
+
+# Todavia no hay panel admin: para poder revisar/ocultar reportes hay que
+# promover un usuario a moderador a mano en la base de datos:
+#   UPDATE "User" SET "isModerator" = true WHERE email = 'moderador@ejemplo.com';
+# Con ese usuario logueado (su <MOD_TOKEN>):
+curl "localhost:3000/reports?status=PENDIENTE" -H "Authorization: Bearer <MOD_TOKEN>"
+
+curl -X PATCH localhost:3000/reports/<REPORT_ID> -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MOD_TOKEN>" \
+  -d '{"status":"REVISADO","hideContent":true}'
 ```

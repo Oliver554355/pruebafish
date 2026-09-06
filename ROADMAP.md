@@ -36,6 +36,16 @@ programando está resumido acá.
   integridad referencial y el cascade on delete). Las reseñas de negocio
   ("Calificación 4.6/5") son simplemente un `Comment` con `rating` (1-5); el
   promedio se calcula al vuelo en `businesses.findOne`, sin tabla `reviews`.
+- **Moderación**: `Report` sigue el mismo patrón (FKs opcionales a
+  `post`/`business`/`comment`, exactamente una). No hay panel admin
+  todavía: el rol se guarda como `User.isModerator` (default `false`) y se
+  activa con un `UPDATE` manual en la base de datos — un
+  `ModeratorGuard` (`backend/src/auth/moderator.guard.ts`) verifica ese
+  campo contra la base en cada request (no queda en el JWT) para que
+  revocar el rol tenga efecto inmediato. `Post`, `Business` y `Comment`
+  tienen `hidden` (default `false`); los endpoints públicos
+  (`nearby`, `findMany`) ya lo filtran. Cuando exista panel admin
+  (roadmap #9), este guard es la base para proteger sus rutas.
 
 ## Estado actual (hecho)
 
@@ -66,11 +76,19 @@ Backend, módulo por módulo:
   quita la reacción) y `GET /reactions/summary?postId=` o `?businessId=`
   (público, conteo por tipo). Por ahora solo existe `LIKE`; el enum
   `ReactionType` se puede ampliar sin tocar la estructura de la tabla.
+- `reports`: `POST /reports` (protegido, cualquier usuario, contra `post`,
+  `business` o `comment` + `reason` + `description` opcional), `GET
+  /reports?status=` y `PATCH /reports/:id` (ambos solo para moderadores).
+  El PATCH cambia el `status` (`PENDIENTE`/`REVISADO`/`DESESTIMADO`) y,
+  si se manda `hideContent: true`, oculta el contenido reportado
+  (`hidden = true`), que desaparece de los listados/búsquedas públicas.
+  Promover un moderador todavía es manual (ver README) — no hay panel
+  admin.
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
-paso): reportes/moderación, animales perdidos/encontrados/adopción como
-entidades propias (por ahora son solo categorías de `Post`), eventos,
-ventas, notificaciones, panel admin, frontend/mapa.
+paso): panel admin (ni siquiera para promover moderadores), animales
+perdidos/encontrados/adopción como entidades propias (por ahora son solo
+categorías de `Post`), eventos, ventas, notificaciones, frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
@@ -78,9 +96,7 @@ ventas, notificaciones, panel admin, frontend/mapa.
 2. ~~Entidad `Business`/`Place` (directorio de negocios)~~ — hecho.
 3. ~~`comments` y `reactions` sobre `Post` y `Business`~~ — hecho (incluye
    calificación de negocios vía `Comment.rating`).
-4. `reports` + moderación básica (ocultar contenido reportado) — ahora que
-   hay contenido generado por usuarios (posts, negocios, comentarios) real
-   que moderar.
+4. ~~`reports` + moderación básica (ocultar contenido reportado)~~ — hecho.
 5. Diferenciar posts temporales (accidentes, decaen en relevancia) de
    permanentes (negocios, parques) — probablemente un campo `expiresAt` o
    lógica de ranking en el feed, no una tabla nueva.

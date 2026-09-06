@@ -41,7 +41,11 @@ export class CommentsService {
       );
     }
     return this.prisma.comment.findMany({
-      where: { postId: query.postId, businessId: query.businessId },
+      where: {
+        postId: query.postId,
+        businessId: query.businessId,
+        hidden: false,
+      },
       orderBy: { createdAt: 'desc' },
       include: { author: { select: { id: true, username: true } } },
     });

@@ -8,15 +8,20 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  username     String     @unique
-  passwordHash String
-  createdAt    DateTime   @default(now())
-  posts        Post[]
-  businesses   Business[]
-  comments     Comment[]
-  reactions    Reaction[]
+  id              String     @id @default(uuid())
+  email           String     @unique
+  username        String     @unique
+  passwordHash    String
+  // Rol de moderacion basico: sin panel admin todavia, se activa a mano
+  // con un UPDATE en la base de datos (ver ROADMAP.md).
+  isModerator     Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  posts           Post[]
+  businesses      Business[]
+  comments        Comment[]
+  reactions       Reaction[]
+  reportsMade     Report[]   @relation("ReportsMade")
+  reportsReviewed Report[]   @relation("ReportsReviewed")
 }
 
 enum PostCategory {
@@ -47,6 +52,9 @@ model Post {
   location    Location?    @relation(fields: [locationId], references: [id])
   comments    Comment[]
   reactions   Reaction[]
+  reports     Report[]
+  // Oculto por moderacion (ver Report). Los endpoints publicos lo excluyen.
+  hidden      Boolean      @default(false)
   createdAt   DateTime     @default(now())
 
   @@index([category])
@@ -115,6 +123,8 @@ model Business {
   createdBy   User             @relation(fields: [createdById], references: [id])
   comments    Comment[]
   reactions   Reaction[]
+  reports     Report[]
+  hidden      Boolean          @default(false)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -137,6 +147,8 @@ model Comment {
   post       Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  reports    Report[]
+  hidden     Boolean   @default(false)
   createdAt  DateTime  @default(now())
 
   @@index([postId])
@@ -166,4 +178,44 @@ model Reaction {
   @@unique([userId, businessId, type])
   @@index([postId])
   @@index([businessId])
+}
+
+enum ReportReason {
+  SPAM
+  INFORMACION_FALSA
+  CONTENIDO_OFENSIVO
+  OTRO
+}
+
+enum ReportStatus {
+  PENDIENTE
+  REVISADO
+  DESESTIMADO
+}
+
+// Reporte generico: exactamente uno de postId/businessId/commentId,
+// validado en el servicio. reviewedById/reviewedAt quedan null hasta que
+// un moderador (User.isModerator) lo resuelve via PATCH /reports/:id.
+model Report {
+  id           String       @id @default(uuid())
+  reason       ReportReason
+  description  String?
+  status       ReportStatus @default(PENDIENTE)
+  reporterId   String
+  reporter     User         @relation("ReportsMade", fields: [reporterId], references: [id])
+  postId       String?
+  post         Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  businessId   String?
+  business     Business?    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  commentId    String?
+  comment      Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reviewedById String?
+  reviewedBy   User?        @relation("ReportsReviewed", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([status])
+  @@index([postId])
+  @@index([businessId])
+  @@index([commentId])
 }
