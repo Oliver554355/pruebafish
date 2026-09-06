@@ -30,6 +30,9 @@ model User {
   reportsMade     Report[]   @relation("ReportsMade")
   reportsReviewed Report[]   @relation("ReportsReviewed")
   photos          Photo[]
+  following       Follow[]   @relation("Following")
+  followers       Follow[]   @relation("Followers")
+  savedItems      SavedItem[]
 }
 
 enum PostCategory {
@@ -74,7 +77,9 @@ model Post {
   // respectivamente (validado en posts.service.ts, no en el esquema).
   animalDetails AnimalDetails?
   eventDetails  EventDetails?
+  saleDetails   SaleDetails?
   photos      Photo[]
+  savedBy     SavedItem[]
   createdAt   DateTime     @default(now())
 
   @@index([category])
@@ -123,6 +128,24 @@ model EventDetails {
   post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   startsAt      DateTime
   organizerName String?
+}
+
+enum SaleCondition {
+  NUEVO
+  USADO
+}
+
+// Extension 1:1 de Post para VENTA (seccion 13 del brief). Fotos, titulo,
+// descripcion, ubicacion y vendedor ya los da Post — aca solo precio y lo
+// que es propio de un anuncio de venta. Precio como Decimal (no Float):
+// es dinero, no queremos errores de redondeo en punto flotante.
+model SaleDetails {
+  postId    String        @id
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  price     Decimal       @db.Decimal(10, 2)
+  currency  String        @default("PEN")
+  condition SaleCondition?
+  sold      Boolean       @default(false)
 }
 
 enum LocationType {
@@ -334,6 +357,42 @@ model Photo {
   uploadedBy   User      @relation(fields: [uploadedById], references: [id])
   createdAt    DateTime  @default(now())
 
+  @@index([postId])
+  @@index([businessId])
+}
+
+// Seguir a otro usuario (seccion 14 del brief). followerId sigue a
+// followingId. El @@unique evita duplicados y hace de "ya lo sigo" un
+// simple exists(); el toggle (seguir/dejar de seguir) vive en el servicio,
+// igual que Reaction.
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
+// Guardado generico (posts o negocios favoritos, seccion 22 del brief:
+// saved_places/saved_posts como una sola tabla). Mismo patron que
+// Comment/Reaction/Report: exactamente uno de postId/businessId, validado
+// en el servicio. Toggle igual que Reaction.
+model SavedItem {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId     String?
+  post       Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@unique([userId, postId])
+  @@unique([userId, businessId])
   @@index([postId])
   @@index([businessId])
 }

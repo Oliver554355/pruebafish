@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsLatitude, IsLongitude, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsLatitude, IsLongitude, IsOptional, Max, Min } from 'class-validator';
+import { PostCategory } from '@prisma/client';
 
 export class FeedQueryDto {
   @Type(() => Number)
@@ -23,4 +24,8 @@ export class FeedQueryDto {
   @Min(1)
   @Max(100)
   limit?: number = 30;
+
+  @IsOptional()
+  @IsEnum(PostCategory)
+  category?: PostCategory;
 }

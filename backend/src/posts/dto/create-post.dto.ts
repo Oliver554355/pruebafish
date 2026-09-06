@@ -13,6 +13,7 @@ import {
 import { PostCategory } from '@prisma/client';
 import { CreateAnimalDetailsDto } from './create-animal-details.dto';
 import { CreateEventDetailsDto } from './create-event-details.dto';
+import { CreateSaleDetailsDto } from './create-sale-details.dto';
 
 export class CreatePostDto {
   @IsEnum(PostCategory)
@@ -58,4 +59,11 @@ export class CreatePostDto {
   @ValidateNested()
   @Type(() => CreateEventDetailsDto)
   event?: CreateEventDetailsDto;
+
+  // Requerido si category es VENTA, prohibido en cualquier otra
+  // (validado en posts.service.ts).
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateSaleDetailsDto)
+  sale?: CreateSaleDetailsDto;
 }

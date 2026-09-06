@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, PostCategory } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -47,6 +52,7 @@ export class PostsService {
   create(authorId: string, dto: CreatePostDto) {
     const isAnimalCategory = ANIMAL_CATEGORIES.includes(dto.category);
     const isEventCategory = dto.category === PostCategory.EVENTO;
+    const isSaleCategory = dto.category === PostCategory.VENTA;
 
     if (isAnimalCategory && !dto.animal) {
       throw new BadRequestException(
@@ -65,6 +71,14 @@ export class PostsService {
     }
     if (!isEventCategory && dto.event) {
       throw new BadRequestException('"event" solo aplica a la categoria EVENTO');
+    }
+    if (isSaleCategory && !dto.sale) {
+      throw new BadRequestException(
+        'Los posts de venta requieren el campo "sale"',
+      );
+    }
+    if (!isSaleCategory && dto.sale) {
+      throw new BadRequestException('"sale" solo aplica a la categoria VENTA');
     }
 
     const ttlHours = DEFAULT_TTL_HOURS[dto.category];
@@ -95,8 +109,17 @@ export class PostsService {
               },
             }
           : undefined,
+        saleDetails: dto.sale
+          ? {
+              create: {
+                price: dto.sale.price,
+                currency: dto.sale.currency ?? 'PEN',
+                condition: dto.sale.condition,
+              },
+            }
+          : undefined,
       },
-      include: { animalDetails: true, eventDetails: true },
+      include: { animalDetails: true, eventDetails: true, saleDetails: true },
     });
   }
 
@@ -106,6 +129,7 @@ export class PostsService {
       include: {
         animalDetails: true,
         eventDetails: true,
+        saleDetails: true,
         location: true,
         photos: true,
         author: { select: { id: true, username: true } },
@@ -115,12 +139,31 @@ export class PostsService {
     return post;
   }
 
+  // Solo el autor puede marcar su propia venta como concretada.
+  async markSold(id: string, userId: string) {
+    const post = await this.prisma.post.findUnique({
+      where: { id },
+      include: { saleDetails: true },
+    });
+    if (!post) throw new NotFoundException('Post no encontrado');
+    if (!post.saleDetails) {
+      throw new BadRequestException('Este post no es una publicación de venta');
+    }
+    if (post.authorId !== userId) {
+      throw new ForbiddenException('No podés marcar como vendida esta publicación');
+    }
+    return this.prisma.saleDetails.update({
+      where: { postId: id },
+      data: { sold: true },
+    });
+  }
+
   // Usa la columna "geog" (geography(Point,4326) + indice GIST) creada por
   // prisma/postgis-extensions.sql, en vez de comparar lat/lng en cada fila.
   // Descarta posts vencidos (expiresAt en el pasado) ademas de los ocultos.
   // Pensado para pines de mapa: orden simple por distancia, sin ranking.
   findNearby(query: NearbyQueryDto) {
-    const { lat, lng, radius = 3000, limit = 50 } = query;
+    const { lat, lng, radius = 3000, limit = 50, category } = query;
     return this.prisma.$queryRaw<NearbyPostRow[]>(Prisma.sql`
       SELECT
         id, category, title, description, lat, lng,
@@ -134,6 +177,7 @@ export class PostsService {
       )
       AND hidden = false
       AND ("expiresAt" IS NULL OR "expiresAt" > now())
+      ${category ? Prisma.sql`AND category = ${category}::"PostCategory"` : Prisma.empty}
       ORDER BY distance ASC
       LIMIT ${limit};
     `);
@@ -151,7 +195,7 @@ export class PostsService {
   // Pesos ajustables aca mismo; no hay A/B testing ni nada mas sofisticado
   // todavia.
   async feed(query: FeedQueryDto, userId?: string) {
-    const { lat, lng, radius = 3000, limit = 30 } = query;
+    const { lat, lng, radius = 3000, limit = 30, category } = query;
 
     let followedCategories: PostCategory[] = [];
     if (userId) {
@@ -198,6 +242,7 @@ export class PostsService {
       )
       AND p.hidden = false
       AND (p."expiresAt" IS NULL OR p."expiresAt" > now())
+      ${category ? Prisma.sql`AND p.category = ${category}::"PostCategory"` : Prisma.empty}
       ORDER BY score DESC
       LIMIT ${limit};
     `);

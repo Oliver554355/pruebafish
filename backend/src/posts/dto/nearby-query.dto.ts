@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsLatitude, IsLongitude, IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsEnum, IsLatitude, IsLongitude, IsOptional, IsInt, Min, Max } from 'class-validator';
+import { PostCategory } from '@prisma/client';
 
 export class NearbyQueryDto {
   @Type(() => Number)
@@ -25,4 +26,9 @@ export class NearbyQueryDto {
   @Min(1)
   @Max(100)
   limit?: number = 50;
+
+  // Ej. filtrar solo VENTA para navegar el "marketplace" en el mapa.
+  @IsOptional()
+  @IsEnum(PostCategory)
+  category?: PostCategory;
 }

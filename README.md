@@ -29,6 +29,13 @@ en producción). Cualquiera puede pedir ser el dueño verificado de un
 negocio (`POST /business-claims`); un moderador lo aprueba o rechaza
 (`GET`/`PATCH /business-claims/:id`) y, al aprobarse, ese negocio pasa a
 tener `verified: true` y solo esa persona puede editarlo de ahí en más.
+Además: **ventas** (`VENTA` con bloque `sale` al crear, `PATCH
+/posts/:id/mark-sold`, y filtro `?category=` en `/posts/nearby` y
+`/posts/feed`), **seguidores** (`POST /users/:id/follow` como toggle, `GET
+/users/:id/followers`, `GET /users/:id/following`), **guardados** (`POST
+/saved` toggle sobre un post o negocio, `GET /saved`) y **reputación**
+(`GET /users/:id` trae perfil público + contadores + `reputation`, calculada
+al vuelo, no un contador que se pueda desincronizar).
 
 ### Levantar en local
 
@@ -156,4 +163,29 @@ curl "localhost:3000/business-claims?status=PENDIENTE" -H "Authorization: Bearer
 curl -X PATCH localhost:3000/business-claims/<CLAIM_ID> -H "Content-Type: application/json" \
   -H "Authorization: Bearer <MOD_TOKEN>" \
   -d '{"status":"APROBADO"}'
+
+# Publicar una venta
+curl -X POST localhost:3000/posts -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"category":"VENTA","title":"Vendo bicicleta","lat":-11.93,"lng":-76.70,
+       "sale":{"price":250,"condition":"USADO"}}'
+
+# Marcarla como vendida (solo el autor)
+curl -X PATCH localhost:3000/posts/<POST_ID>/mark-sold -H "Authorization: Bearer <TOKEN>"
+
+# Navegar solo el "marketplace" en el mapa
+curl "localhost:3000/posts/nearby?lat=-11.93&lng=-76.70&radius=3000&category=VENTA"
+
+# Seguir a otro usuario — repetir la misma llamada deja de seguirlo (toggle)
+curl -X POST localhost:3000/users/<OTHER_USER_ID>/follow -H "Authorization: Bearer <TOKEN>"
+
+# Guardar un post (toggle igual que reactions)
+curl -X POST localhost:3000/saved -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"postId":"<POST_ID>"}'
+
+curl "localhost:3000/saved" -H "Authorization: Bearer <TOKEN>"
+
+# Perfil publico con contadores y reputacion
+curl "localhost:3000/users/<USER_ID>"
 ```

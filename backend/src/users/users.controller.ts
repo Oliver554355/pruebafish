@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateFollowedCategoriesDto } from './dto/update-followed-categories.dto';
@@ -28,5 +28,32 @@ export class UsersController {
       req.user.userId,
       dto.categories,
     );
+  }
+
+  // Rutas con :id van despues de las rutas estaticas ('me', 'me/...') para
+  // que Nest no interprete "me" como un valor de :id.
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/follow')
+  follow(
+    @Param('id') id: string,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.usersService.toggleFollow(req.user.userId, id);
+  }
+
+  @Get(':id/followers')
+  followers(@Param('id') id: string) {
+    return this.usersService.getFollowers(id);
+  }
+
+  @Get(':id/following')
+  following(@Param('id') id: string) {
+    return this.usersService.getFollowing(id);
+  }
+
+  // Perfil publico (sin email), con contadores y reputacion.
+  @Get(':id')
+  publicProfile(@Param('id') id: string) {
+    return this.usersService.getPublicProfile(id);
   }
 }

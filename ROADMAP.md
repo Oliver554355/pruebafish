@@ -98,12 +98,47 @@ programando está resumido acá.
   Aprobar/rechazar es exclusivo de moderadores (mismo `ModeratorGuard` que
   `reports`); no hay verificación real de identidad (RUC, documento) — el
   moderador decide a criterio con el `message` que manda quien reclama.
+- **Ventas como extensión 1:1 de `Post`**: `SaleDetails` sigue el mismo
+  patrón que `AnimalDetails`/`EventDetails` (fotos, título, descripción,
+  ubicación y vendedor ya los da `Post`). `price` es `Decimal(10,2)`, no
+  `Float` — es dinero, y los errores de redondeo de punto flotante no son
+  aceptables ahí. `sold` es un booleano simple (no un estado "reservado"
+  intermedio); marcarlo es `PATCH /posts/:id/mark-sold`, solo el autor.
+  Como ahora hay una categoría pensada para "navegar" (marketplace) en vez
+  de solo "descubrir cerca", se agregó `?category=` opcional a
+  `GET /posts/nearby` y `GET /posts/feed` — antes no existía ese filtro en
+  posts (sí en `businesses/nearby`) porque no hacía falta.
+- **Guardados genéricos**: `SavedItem` sigue el mismo patrón de FKs
+  opcionales que `Comment`/`Reaction`/`Photo` (exactamente uno de
+  `postId`/`businessId`). Toggle igual que `Reaction` — guardar de nuevo lo
+  saca. Es la unificación de `saved_places`/`saved_posts` (sección 22 del
+  brief) en una sola tabla, mismo criterio que ya se aplicó ahí.
+- **Seguidores**: `Follow` es una tabla de unión simple (`followerId` →
+  `followingId`) con `@@unique` para que "ya lo sigo" sea un solo `exists`.
+  Vive en el módulo `users` (no un módulo aparte) porque las rutas son
+  `/users/:id/follow`, `/users/:id/followers`, `/users/:id/following` —
+  es una relación sobre el propio recurso `User`, no una entidad
+  independiente como `Report` o `BusinessClaim`.
+- **Reputación calculada, no almacenada**: no hay columna `User.reputation`
+  que haya que mantener sincronizada con cada post, reporte o baneo — eso
+  se desincroniza tarde o temprano. `usersService.getReputation` la calcula
+  al vuelo combinando antigüedad de cuenta, posts/recomendaciones propias,
+  interacción recibida (reacciones+comentarios en los posts del usuario), y
+  penaliza reportes `REVISADO` contra su contenido y contenido propio que
+  terminó `hidden`. Pesos arbitrarios (documentados en
+  `users.service.ts`), igual de "punto de partida sin tuning" que los del
+  feed — no es un algoritmo validado, es una base razonable. Expuesta en
+  `GET /users/:id` (perfil público nuevo: antes solo existía `GET
+  /users/me` privado).
 
 ## Estado actual (hecho)
 
 Backend, módulo por módulo:
 - `auth`: registro y login con JWT (bcrypt para passwords).
-- `users`: `GET /users/me` protegido.
+- `users`: `GET /users/me` protegido; `PATCH /users/me/followed-categories`;
+  `GET /users/:id` (perfil público: contadores + `reputation`, calculada al
+  vuelo — ver arriba); `POST /users/:id/follow` (protegido, toggle), `GET
+  /users/:id/followers`, `GET /users/:id/following` (públicos).
 - `posts`: `POST /posts` (protegido, cualquier categoría del enum
   `PostCategory`, con `locationId` opcional) y `GET /posts/nearby` (público,
   búsqueda por radio en metros usando PostGIS).
@@ -144,12 +179,16 @@ Backend, módulo por módulo:
   características, sexo, edad aproximada, condiciones de adopción,
   contacto) y los `EVENTO` requieren `event` (fecha/hora `startsAt`,
   organizador) — ambos validados en el servicio, prohibidos en cualquier
-  otra categoría. `GET /posts/:id` devuelve la ficha completa (con
-  `animalDetails`/`eventDetails`, autor y ubicación). `GET /posts/nearby`
-  sigue ordenando solo por distancia (pines de mapa) y excluye vencidos y
-  ocultos; `GET /posts/feed` es el feed rankeado (ver arriba), y
-  `PATCH /users/me/followed-categories` deja que el usuario elija qué
-  categorías seguir para ese ranking.
+  otra categoría. Igual `VENTA` requiere `sale` (`price`, `currency`,
+  `condition` opcional) — ver `SaleDetails` arriba; `PATCH
+  /posts/:id/mark-sold` la marca vendida (solo el autor). `GET /posts/:id`
+  devuelve la ficha completa (con `animalDetails`/`eventDetails`/
+  `saleDetails`, autor, ubicación y fotos). `GET /posts/nearby` sigue
+  ordenando solo por distancia (pines de mapa) y excluye vencidos y
+  ocultos; `GET /posts/feed` es el feed rankeado (ver arriba). Ambos
+  aceptan `?category=` opcional (útil para navegar solo `VENTA` como
+  marketplace), y `PATCH /users/me/followed-categories` deja que el
+  usuario elija qué categorías seguir para el ranking del feed.
 - `photos`: `POST /photos` (protegido, `multipart/form-data` con campo
   `file` + `postId` o `businessId`) sube la imagen al storage S3-compatible
   y crea el registro; `DELETE /photos/:id` borra ambos (solo quien la
@@ -163,6 +202,9 @@ Backend, módulo por módulo:
   (ambos solo moderadores); al aprobar, el negocio queda `verified: true`
   con `ownerId` asignado y pierde vigencia el permiso de edición del
   `createdById` original.
+- `saved`: `POST /saved` (protegido, toggle sobre `postId` o `businessId`)
+  y `GET /saved` (protegido, lista lo guardado por el usuario actual con el
+  post/negocio incluido).
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
 paso): panel admin (ni siquiera para promover moderadores ni para revisar
@@ -170,7 +212,10 @@ paso): panel admin (ni siquiera para promover moderadores ni para revisar
 de identidad en los reclamos de negocio (hoy es a criterio del moderador),
 URLs firmadas o control de acceso por foto (hoy todo bucket público),
 vincular el organizador de un evento a un `Business` existente (hoy
-`organizerName` es texto libre), ventas, notificaciones, frontend/mapa.
+`organizerName` es texto libre), promociones destacadas para negocios
+verificados, paginación en cualquier listado (`comments`, `businesses`,
+`reports`, `business-claims`, `saved` — todos devuelven todo sin límite),
+notificaciones, frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
@@ -192,10 +237,22 @@ vincular el organizador de un evento a un `Business` existente (hoy
    por moderador, `ownerId`/`verified` en `Business`. Falta el panel de
    administración de negocio (que el dueño edite promociones, vea
    estadísticas, etc. — sección 6 del brief) una vez haya frontend.
-10. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
+10. ~~Ventas (`SaleDetails`)~~ — hecho, extensión 1:1 de `Post` + filtro por
+    categoría en `nearby`/`feed`. Falta: promociones y monetización, que
+    siguen siendo de baja prioridad hasta que haya comunidad activa.
+11. ~~Seguidores (`Follow`)~~ — hecho: toggle + listados.
+12. ~~Guardados (`SavedItem`)~~ — hecho: toggle + listado propio.
+13. ~~Reputación~~ — hecho, calculada al vuelo en `GET /users/:id` (perfil
+    público nuevo). Pendiente ajustar los pesos con datos reales cuando
+    haya usuarios, igual que el ranking del feed.
+14. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
     consumiendo `GET /posts/nearby` y el feed consumiendo `GET /posts/feed`.
-11. Notificaciones (FCM) cuando haya push cerca del usuario.
-12. Ventas, promociones, monetización — dejar para cuando haya comunidad activa.
+15. Notificaciones (FCM) cuando haya push cerca del usuario.
+16. Paginación en los listados que hoy devuelven todo sin límite (ver
+    arriba) — antes de que haya suficiente contenido como para que duela.
+17. Panel de administración de negocio (dueño verificado edita promociones,
+    ve estadísticas) y monetización en general — una vez haya frontend y
+    comunidad activa.
 
 Cada uno de estos puntos puede pedirse como una sesión aparte ("agreguemos
 el módulo de negocios", "ahora comentarios y reacciones") sin tener que
