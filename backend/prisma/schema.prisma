@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  posts        Post[]
+}
+
+enum PostCategory {
+  ACCIDENTE
+  INCIDENTE
+  ANIMAL_PERDIDO
+  ANIMAL_ENCONTRADO
+  ADOPCION
+  RECOMENDACION
+  EVENTO
+  AVISO
+  VENTA
+  OTRO
+}
+
+// lat/lng son la fuente de verdad; la columna "geog" (geography(Point,4326))
+// se agrega vía prisma/postgis-extensions.sql porque Prisma no modela tipos PostGIS.
+model Post {
+  id          String       @id @default(uuid())
+  category    PostCategory
+  title       String
+  description String?
+  lat         Float
+  lng         Float
+  authorId    String
+  author      User         @relation(fields: [authorId], references: [id])
+  createdAt   DateTime     @default(now())
+
+  @@index([category])
+  @@index([createdAt])
+}
