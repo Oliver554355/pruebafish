@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_DEFAULT, Region, UrlTile } from 'react-native-maps';
 import { fetchNearbyPosts } from '../api/posts';
 import { NearbyPost } from '../types';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '../categoryStyle';
@@ -45,12 +45,25 @@ export default function MapScreen() {
     <View style={styles.container}>
       <MapView
         style={StyleSheet.absoluteFill}
+        // Android exige una API key de Google Maps que no se puede usar
+        // dentro de Expo Go (solo en un build nativo propio). Para no
+        // depender de eso ni de una cuenta de Google Cloud, usamos
+        // mapType="none" (oculta las teselas de Google) y dibujamos
+        // encima teselas de OpenStreetMap (gratis, sin API key), igual
+        // que el mapa de CyberTracker en el backend.
+        provider={PROVIDER_DEFAULT}
+        mapType="none"
         initialRegion={initialRegion}
         showsUserLocation
         onRegionChangeComplete={(region) =>
           loadPosts(region.latitude, region.longitude)
         }
       >
+        <UrlTile
+          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maximumZ={19}
+          flipY={false}
+        />
         {posts.map((post) => (
           <Marker
             key={post.id}
