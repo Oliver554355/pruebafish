@@ -7,7 +7,7 @@ import { AuthGuard } from '@nestjs/passport';
 // (ej. GET /posts/feed con las categorias seguidas del usuario).
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
-  handleRequest(_err: unknown, user: unknown) {
-    return user ?? undefined;
+  handleRequest<TUser = any>(_err: unknown, user: unknown): TUser {
+    return (user ?? undefined) as TUser;
   }
 }

@@ -6,7 +6,7 @@ import { UpdateBusinessDto } from './dto/update-business.dto';
 import { NearbyBusinessQueryDto } from './dto/nearby-business-query.dto';
 import { ListBusinessesDto } from './dto/list-businesses.dto';
 
-interface NearbyBusinessRow {
+export interface NearbyBusinessRow {
   id: string;
   category: string;
   name: string;

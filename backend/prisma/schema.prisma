@@ -217,6 +217,7 @@ model Business {
   reactions   Reaction[]
   reports     Report[]
   photos      Photo[]
+  savedBy     SavedItem[]
   hidden      Boolean          @default(false)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

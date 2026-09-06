@@ -10,7 +10,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { NearbyQueryDto } from './dto/nearby-query.dto';
 import { FeedQueryDto } from './dto/feed-query.dto';
 
-interface NearbyPostRow {
+export interface NearbyPostRow {
   id: string;
   category: string;
   title: string;
@@ -23,7 +23,7 @@ interface NearbyPostRow {
   distance: number;
 }
 
-interface FeedPostRow extends NearbyPostRow {
+export interface FeedPostRow extends NearbyPostRow {
   reactionCount: number;
   commentCount: number;
   score: number;
