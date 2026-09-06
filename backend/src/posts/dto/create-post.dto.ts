@@ -1,4 +1,13 @@
-import { IsEnum, IsLatitude, IsLongitude, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsLatitude,
+  IsLongitude,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+} from 'class-validator';
 import { PostCategory } from '@prisma/client';
 
 export class CreatePostDto {
@@ -24,4 +33,11 @@ export class CreatePostDto {
   @IsOptional()
   @IsUUID()
   locationId?: string;
+
+  // Cuando el post tiene una fecha natural de vencimiento (ej. un EVENTO
+  // que ya paso). Si no se manda, las categorias que decaen (accidentes,
+  // incidentes, avisos) reciben un valor por defecto automatico.
+  @IsOptional()
+  @IsDateString()
+  expiresAt?: string;
 }

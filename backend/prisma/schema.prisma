@@ -55,11 +55,19 @@ model Post {
   reports     Report[]
   // Oculto por moderacion (ver Report). Los endpoints publicos lo excluyen.
   hidden      Boolean      @default(false)
+  // Null = permanente (recomendaciones, avisos sin vencimiento, etc.).
+  // Categorias que decaen (ACCIDENTE/INCIDENTE) reciben un valor por
+  // defecto al crearse (ver DEFAULT_TTL_HOURS en posts.service.ts) si el
+  // usuario no manda uno explicito; EVENTO usa la fecha del evento. Los
+  // negocios/lugares (Business) son permanentes por diseño y no tienen
+  // este campo — no hace falta, viven en otra tabla.
+  expiresAt   DateTime?
   createdAt   DateTime     @default(now())
 
   @@index([category])
   @@index([createdAt])
   @@index([locationId])
+  @@index([expiresAt])
 }
 
 enum LocationType {

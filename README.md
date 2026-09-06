@@ -42,12 +42,18 @@ npm run start:dev
 curl -X POST localhost:3000/auth/register -H "Content-Type: application/json" \
   -d '{"email":"a@a.com","username":"ana","password":"12345678"}'
 
-# Crear post (usar el accessToken de la respuesta anterior)
+# Crear post (usar el accessToken de la respuesta anterior).
+# ACCIDENTE vence solo en 6hs (ver DEFAULT_TTL_HOURS); no hace falta mandar expiresAt.
 curl -X POST localhost:3000/posts -H "Content-Type: application/json" \
   -H "Authorization: Bearer <TOKEN>" \
   -d '{"category":"ACCIDENTE","title":"Choque en Carretera Central","lat":-11.93,"lng":-76.70}'
 
-# Ver publicaciones cercanas
+# Un EVENTO sí conviene mandarlo explícito (la fecha del evento)
+curl -X POST localhost:3000/posts -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"category":"EVENTO","title":"Feria en la plaza","lat":-11.93,"lng":-76.70,"expiresAt":"2026-09-20T23:59:00Z"}'
+
+# Ver publicaciones cercanas (ya excluye vencidas y ocultas)
 curl "localhost:3000/posts/nearby?lat=-11.93&lng=-76.70&radius=3000"
 
 # Recorrer la jerarquia geografica (sin parentId devuelve el nivel raiz)

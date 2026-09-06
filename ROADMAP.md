@@ -46,6 +46,15 @@ programando está resumido acá.
   tienen `hidden` (default `false`); los endpoints públicos
   (`nearby`, `findMany`) ya lo filtran. Cuando exista panel admin
   (roadmap #9), este guard es la base para proteger sus rutas.
+- **Temporal vs. permanente**: en vez de una tabla/flag "es temporal",
+  `Post.expiresAt` (nullable) es la unica pieza necesaria: null = permanente
+  (recomendaciones, avisos sin vencimiento), con fecha = deja de listarse en
+  `nearby` pasada esa fecha. `DEFAULT_TTL_HOURS` en `posts.service.ts` le
+  pone un vencimiento automatico a categorias que naturalmente decaen
+  (ACCIDENTE/INCIDENTE: 6h, AVISO: 24h) si el usuario no manda uno; EVENTO
+  no tiene default porque su fecha la define quien publica. `Business`
+  (negocios, parques) no tiene este campo — es permanente por estar en su
+  propia tabla, no necesita distinguirse via un flag.
 
 ## Estado actual (hecho)
 
@@ -84,11 +93,19 @@ Backend, módulo por módulo:
   (`hidden = true`), que desaparece de los listados/búsquedas públicas.
   Promover un moderador todavía es manual (ver README) — no hay panel
   admin.
+- `posts` ahora también soporta `expiresAt` (opcional al crear; automático
+  para ACCIDENTE/INCIDENTE/AVISO si no se manda uno). `GET /posts/nearby`
+  excluye posts vencidos además de los ocultos.
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
-paso): panel admin (ni siquiera para promover moderadores), animales
+paso): ranking/relevancia del feed más allá de distancia (el "feed
+inteligente" de la sección 18 del brief — priorizar por interacción,
+categorías seguidas, etc. — no está hecho, solo el filtrado por vencimiento),
+panel admin (ni siquiera para promover moderadores), animales
 perdidos/encontrados/adopción como entidades propias (por ahora son solo
-categorías de `Post`), eventos, ventas, notificaciones, frontend/mapa.
+categorías de `Post`), eventos como entidad con más estructura (organizador,
+imagen — hoy es solo una categoría de `Post` con `expiresAt`), ventas,
+notificaciones, frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
@@ -97,9 +114,8 @@ categorías de `Post`), eventos, ventas, notificaciones, frontend/mapa.
 3. ~~`comments` y `reactions` sobre `Post` y `Business`~~ — hecho (incluye
    calificación de negocios vía `Comment.rating`).
 4. ~~`reports` + moderación básica (ocultar contenido reportado)~~ — hecho.
-5. Diferenciar posts temporales (accidentes, decaen en relevancia) de
-   permanentes (negocios, parques) — probablemente un campo `expiresAt` o
-   lógica de ranking en el feed, no una tabla nueva.
+5. ~~Diferenciar posts temporales de permanentes~~ — hecho vía
+   `Post.expiresAt` + TTL por categoría.
 6. Animales: decidir si conviene modelarlos como sub-tipo de `Post` con
    campos JSON opcionales, o tablas propias (`lost_pets`, `found_pets`,
    `adoptions`) — evaluar cuando haya casos de uso reales.
