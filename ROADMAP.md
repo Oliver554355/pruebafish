@@ -42,20 +42,28 @@ Backend, módulo por módulo:
   `GET /locations/:id` (con padre e hijos). Seed (`npm run prisma:seed`)
   carga Perú → Lima (región) → Lima (provincia) → Lurigancho-Chosica →
   Chosica.
+- `businesses`: directorio de negocios/lugares (`RESTAURANTE`, `TIENDA`,
+  `HOSTAL`, `PARQUE`, `TURISMO`, `FARMACIA`, `SALUD`, `EDUCACION`,
+  `BANCO_CAJERO`, `PARADA`, `OTRO`). `POST /businesses` (protegido, cualquier
+  usuario logueado da de alta un lugar — sin restricción de admin todavía),
+  `GET /businesses/nearby` (público, misma búsqueda por radio con PostGIS
+  que `posts`, con filtro opcional de categoría), `GET /businesses` (listado
+  plano por categoría/zona), `GET /businesses/:id`, `PATCH /businesses/:id`
+  (solo quien lo creó puede editarlo — no hay "negocio verificado" todavía).
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
-paso): negocios/lugares, comentarios, reacciones, reportes/moderación,
-animales perdidos/encontrados/adopción como entidades propias (por ahora son
-solo categorías de `Post`), eventos, ventas, notificaciones, panel admin,
-frontend/mapa.
+paso): calificaciones/reseñas de negocios, comentarios, reacciones,
+reportes/moderación, animales perdidos/encontrados/adopción como entidades
+propias (por ahora son solo categorías de `Post`), eventos, ventas,
+notificaciones, panel admin, frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
 1. ~~Tabla `locations` con la jerarquía país→región→provincia→distrito→zona~~ — hecho.
-2. Entidad `Business`/`Place` (directorio de negocios) con su propia ficha,
-   reutilizando la misma columna `geog` + índice GIST, y opcionalmente
-   `locationId` para agruparlos por zona.
-3. `comments` y `reactions` sobre `Post`.
+2. ~~Entidad `Business`/`Place` (directorio de negocios)~~ — hecho. Falta:
+   calificaciones/reseñas (sección 5 del brief) — se puede resolver junto
+   con el paso 3 (comments/reactions) reutilizándolos sobre `Business`.
+3. `comments` y `reactions` — sobre `Post` y `Business`.
 4. `reports` + moderación básica (ocultar contenido reportado).
 5. Diferenciar posts temporales (accidentes, decaen en relevancia) de
    permanentes (negocios, parques) — probablemente un campo `expiresAt` o

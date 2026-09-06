@@ -8,12 +8,13 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  username     String   @unique
+  id           String     @id @default(uuid())
+  email        String     @unique
+  username     String     @unique
   passwordHash String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
   posts        Post[]
+  businesses   Business[]
 }
 
 enum PostCategory {
@@ -68,8 +69,49 @@ model Location {
   parent    Location?    @relation("LocationHierarchy", fields: [parentId], references: [id])
   children  Location[]   @relation("LocationHierarchy")
   posts     Post[]
+  businesses Business[]
   createdAt DateTime     @default(now())
 
   @@index([parentId])
   @@index([type])
+}
+
+enum BusinessCategory {
+  RESTAURANTE
+  TIENDA
+  HOSTAL
+  PARQUE
+  TURISMO
+  FARMACIA
+  SALUD
+  EDUCACION
+  BANCO_CAJERO
+  PARADA
+  OTRO
+}
+
+// Directorio de negocios/lugares. "geog" (geography(Point,4326) + indice
+// GIST) se agrega en prisma/postgis-extensions.sql, igual que en Post.
+// createdById es quien dio de alta el lugar (cualquier usuario, como en
+// OSM/Google Maps) — no confundir con un futuro "owner" de negocio
+// verificado (roadmap #9), que todavia no existe.
+model Business {
+  id          String           @id @default(uuid())
+  category    BusinessCategory
+  name        String
+  description String?
+  address     String?
+  phone       String?
+  hours       String?
+  lat         Float
+  lng         Float
+  locationId  String?
+  location    Location?        @relation(fields: [locationId], references: [id])
+  createdById String
+  createdBy   User             @relation(fields: [createdById], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([category])
+  @@index([locationId])
 }

@@ -9,8 +9,11 @@ próximas fases.
 Stack: NestJS + Prisma + PostgreSQL/PostGIS.
 
 Cubre: registro/login (JWT), perfil (`/users/me`), publicaciones
-geolocalizadas (`POST /posts`, `GET /posts/nearby`) y la jerarquía
-geográfica País → Región → Provincia → Distrito → Zona (`GET /locations`).
+geolocalizadas (`POST /posts`, `GET /posts/nearby`), la jerarquía
+geográfica País → Región → Provincia → Distrito → Zona (`GET /locations`) y
+el directorio de negocios/lugares (`POST /businesses`, `GET
+/businesses/nearby`, `GET /businesses`, `GET /businesses/:id`, `PATCH
+/businesses/:id`).
 
 ### Levantar en local
 
@@ -46,4 +49,12 @@ curl "localhost:3000/posts/nearby?lat=-11.93&lng=-76.70&radius=3000"
 # Recorrer la jerarquia geografica (sin parentId devuelve el nivel raiz)
 curl "localhost:3000/locations"
 curl "localhost:3000/locations?parentId=<ID_DE_PERU>"
+
+# Dar de alta un negocio (usa el accessToken de /auth/register o /auth/login)
+curl -X POST localhost:3000/businesses -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"category":"RESTAURANTE","name":"El Sabor","lat":-11.93,"lng":-76.70}'
+
+# Negocios cerca de un punto (opcionalmente filtrado por categoria)
+curl "localhost:3000/businesses/nearby?lat=-11.93&lng=-76.70&radius=3000&category=RESTAURANTE"
 ```

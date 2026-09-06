@@ -11,3 +11,8 @@ ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS geog geography(Point, 4326)
   GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography) STORED;
 
 CREATE INDEX IF NOT EXISTS post_geog_idx ON "Post" USING GIST (geog);
+
+ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS geog geography(Point, 4326)
+  GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography) STORED;
+
+CREATE INDEX IF NOT EXISTS business_geog_idx ON "Business" USING GIST (geog);
