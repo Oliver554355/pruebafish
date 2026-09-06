@@ -11,6 +11,16 @@ programando está resumido acá.
 - **Arquitectura**: monolito modular (no microservicios) para poder iterar
   rápido ahora y separar en servicios el día que el tráfico lo justifique.
 - **Backend**: NestJS + Prisma + PostgreSQL con extensión PostGIS.
+- **App móvil**: **React Native + Expo + TypeScript** (no Flutter) — mismo
+  lenguaje que el backend (TS de punta a punta), y Expo acelera el arranque
+  del MVP (permisos, mapas, cámara, ubicación ya integrados) sin tener que
+  tocar Xcode/Android Studio para lo básico. Expo Go es solo la herramienta
+  de *desarrollo* (ver cambios en vivo en el celular); el build real e
+  instalable sale de `eas build` (`.apk`/`.aab`/`.ipa` nativos), no hay que
+  reescribir nada para eso. Mapas: por ahora sin proveedor forzado
+  (`react-native-maps` usa el mapa nativo de cada plataforma), pendiente
+  decidir Mapbox vs Google Maps en firme cuando haga falta un build real
+  (Expo Go no necesita API key para esto, un build de producción sí).
 - **Geolocalización**: cada `Post` tiene `lat`/`lng` (fuente de verdad para
   Prisma) más una columna generada `geog geography(Point,4326)` con índice
   GIST (ver `backend/prisma/postgis-extensions.sql`), para que "qué hay
@@ -206,6 +216,28 @@ Backend, módulo por módulo:
   y `GET /saved` (protegido, lista lo guardado por el usuario actual con el
   post/negocio incluido).
 
+App móvil (`mobile/`), primer esqueleto — ver `mobile/README.md`:
+- React Native + Expo (SDK 57) + TypeScript, sin `expo-router` (navegación
+  con React Navigation clásico: stack de auth + bottom tabs).
+- `AuthContext` (`src/context/AuthContext.tsx`) guarda el JWT con
+  `expo-secure-store` y expone `login`/`register`/`logout`; un interceptor
+  de axios (`src/api/client.ts`) lo agrega a cada request.
+- 5 tabs (brief sección 23): **Mapa** (pines de `/posts/nearby`, coloreados
+  por categoría), **Comunidad** (feed de `/posts/feed`), **Publicar** (solo
+  categorías "simples" todavía — animales/eventos/ventas necesitan
+  formulario propio que no existe acá, aunque el backend ya los soporta),
+  **Explorar** (negocios de `/businesses/nearby`), **Perfil** (`/users/me`
+  + `/users/:id` para reputación/contadores + logout).
+- `useCurrentLocation` (`src/useCurrentLocation.ts`) pide permiso de
+  ubicación y cae a las coordenadas de Chosica si lo niegan, en vez de
+  romper la app.
+- Sin proveedor de mapa forzado (`react-native-maps` usa Apple Maps/Google
+  Maps nativos de cada plataforma) — funciona en Expo Go sin API keys;
+  la decisión de Mapbox/Google en firme queda para cuando haga falta un
+  build de producción real.
+- Sin diseño visual (colores/logo/tipografía genéricos) — es un esqueleto
+  funcional para validar que los flujos contra el backend funcionan.
+
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
 paso): panel admin (ni siquiera para promover moderadores ni para revisar
 `business-claims` desde una UI — todo vía API por ahora), verificación real
@@ -215,7 +247,9 @@ vincular el organizador de un evento a un `Business` existente (hoy
 `organizerName` es texto libre), promociones destacadas para negocios
 verificados, paginación en cualquier listado (`comments`, `businesses`,
 `reports`, `business-claims`, `saved` — todos devuelven todo sin límite),
-notificaciones, frontend/mapa.
+notificaciones, diseño visual, formularios de animales/eventos/ventas en
+la app, pantallas de fotos/reacciones/comentarios/guardados/seguidores en
+la app (todo existe en el backend, nada tiene UI todavía).
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
@@ -245,14 +279,23 @@ notificaciones, frontend/mapa.
 13. ~~Reputación~~ — hecho, calculada al vuelo en `GET /users/:id` (perfil
     público nuevo). Pendiente ajustar los pesos con datos reales cuando
     haya usuarios, igual que el ranking del feed.
-14. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
-    consumiendo `GET /posts/nearby` y el feed consumiendo `GET /posts/feed`.
-15. Notificaciones (FCM) cuando haya push cerca del usuario.
-16. Paginación en los listados que hoy devuelven todo sin límite (ver
+14. ~~Frontend: elegir stack y armar el esqueleto~~ — hecho: React Native +
+    Expo + TypeScript, con Mapa/Comunidad/Publicar/Explorar/Perfil
+    consumiendo el backend real. Probar con Expo Go en un celular real es
+    el siguiente paso obligado antes de seguir sumando pantallas — ver
+    `mobile/README.md`.
+15. Completar la app: formularios de animales/eventos/ventas en Publicar,
+    y pantallas para fotos/reacciones/comentarios/guardados/seguidores
+    (todo existe en el backend, falta la UI).
+16. Notificaciones (FCM) cuando haya push cerca del usuario.
+17. Paginación en los listados que hoy devuelven todo sin límite (ver
     arriba) — antes de que haya suficiente contenido como para que duela.
-17. Panel de administración de negocio (dueño verificado edita promociones,
-    ve estadísticas) y monetización en general — una vez haya frontend y
-    comunidad activa.
+18. Panel de administración de negocio (dueño verificado edita promociones,
+    ve estadísticas) y monetización en general — una vez haya frontend
+    completo y comunidad activa.
+19. Diseño visual real (colores, logo, tipografía, nombre comercial) —
+    reemplaza los placeholders genéricos de `mobile/src/categoryStyle.ts`
+    y el resto de la UI.
 
 Cada uno de estos puntos puede pedirse como una sesión aparte ("agreguemos
 el módulo de negocios", "ahora comentarios y reacciones") sin tener que

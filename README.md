@@ -4,6 +4,10 @@ Plataforma comunitaria local (mapa + red social + directorio de negocios) para
 Chosica, Lima, Perú. Ver `ROADMAP.md` para decisiones de arquitectura y las
 próximas fases.
 
+- **Backend** (`backend/`): NestJS + Prisma + PostgreSQL/PostGIS — ver abajo.
+- **App móvil** (`mobile/`): React Native + Expo + TypeScript — ver
+  `mobile/README.md` para levantarla y probarla con Expo Go.
+
 ## Backend (paso 1 del MVP)
 
 Stack: NestJS + Prisma + PostgreSQL/PostGIS.
