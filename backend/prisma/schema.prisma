@@ -15,6 +15,10 @@ model User {
   // Rol de moderacion basico: sin panel admin todavia, se activa a mano
   // con un UPDATE en la base de datos (ver ROADMAP.md).
   isModerator     Boolean    @default(false)
+  // Preferencia de feed (brief seccion 18, "categorias que el usuario
+  // siga"): un array nativo de Postgres alcanza, no hace falta una tabla
+  // de union para esto.
+  followedCategories PostCategory[] @default([])
   createdAt       DateTime   @default(now())
   posts           Post[]
   businesses      Business[]
@@ -62,12 +66,58 @@ model Post {
   // negocios/lugares (Business) son permanentes por diseño y no tienen
   // este campo — no hace falta, viven en otra tabla.
   expiresAt   DateTime?
+  // 1:1 opcional: solo existe cuando category es de animales o EVENTO
+  // respectivamente (validado en posts.service.ts, no en el esquema).
+  animalDetails AnimalDetails?
+  eventDetails  EventDetails?
   createdAt   DateTime     @default(now())
 
   @@index([category])
   @@index([createdAt])
   @@index([locationId])
   @@index([expiresAt])
+}
+
+enum AnimalSpecies {
+  PERRO
+  GATO
+  AVE
+  OTRO
+}
+
+enum AnimalSex {
+  MACHO
+  HEMBRA
+  DESCONOCIDO
+}
+
+// Extension 1:1 de Post para ANIMAL_PERDIDO / ANIMAL_ENCONTRADO / ADOPCION.
+// El post ya aporta ubicacion, fecha/hora (createdAt), comentarios,
+// reacciones y reportes; aca solo van los campos propios del animal
+// (seccion 9 del brief). adoptionConditions solo tiene sentido si el post
+// es de categoria ADOPCION.
+model AnimalDetails {
+  postId             String        @id
+  post               Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  species            AnimalSpecies
+  petName            String?
+  color              String?
+  characteristics    String?
+  sex                AnimalSex?
+  approxAgeYears     Float?
+  adoptionConditions String?
+  contactPhone       String?
+}
+
+// Extension 1:1 de Post para EVENTO (seccion 12 del brief). startsAt es la
+// fecha/hora real del evento; si el post no trae "expiresAt" propio, el
+// servicio usa startsAt como vencimiento (el evento deja de listarse
+// cuando ya paso). Nombre/descripcion/ubicacion ya los da Post.
+model EventDetails {
+  postId        String   @id
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  startsAt      DateTime
+  organizerName String?
 }
 
 enum LocationType {

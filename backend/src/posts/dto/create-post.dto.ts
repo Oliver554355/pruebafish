@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
@@ -7,8 +8,11 @@ import {
   IsString,
   IsUUID,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { PostCategory } from '@prisma/client';
+import { CreateAnimalDetailsDto } from './create-animal-details.dto';
+import { CreateEventDetailsDto } from './create-event-details.dto';
 
 export class CreatePostDto {
   @IsEnum(PostCategory)
@@ -40,4 +44,18 @@ export class CreatePostDto {
   @IsOptional()
   @IsDateString()
   expiresAt?: string;
+
+  // Requerido si category es ANIMAL_PERDIDO/ANIMAL_ENCONTRADO/ADOPCION,
+  // prohibido en cualquier otra categoria (validado en posts.service.ts).
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateAnimalDetailsDto)
+  animal?: CreateAnimalDetailsDto;
+
+  // Requerido si category es EVENTO, prohibido en cualquier otra
+  // (validado en posts.service.ts).
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateEventDetailsDto)
+  event?: CreateEventDetailsDto;
 }

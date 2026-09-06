@@ -55,6 +55,23 @@ programando está resumido acá.
   no tiene default porque su fecha la define quien publica. `Business`
   (negocios, parques) no tiene este campo — es permanente por estar en su
   propia tabla, no necesita distinguirse via un flag.
+- **Animales y eventos como extensión 1:1 de `Post`** (no tablas propias
+  `lost_pets`/`found_pets`/`adoptions`, ni sub-tipo con JSON): `AnimalDetails`
+  y `EventDetails` cuelgan de `Post` por `postId`, cada una solo con los
+  campos que le son propios. `Post` sigue siendo el dueño de ubicación,
+  comentarios, reacciones, reportes y vencimiento — no hay que duplicar
+  nada de eso para cada tipo de contenido. Validación de "cuál va con cuál"
+  (animal solo con categorías de animales, event solo con `EVENTO`) vive en
+  `posts.service.create`, igual que el patrón ya usado en `Comment`/`Report`.
+- **Feed rankeado separado de `nearby`**: `GET /posts/nearby` sigue siendo
+  el simple (para pines de mapa); `GET /posts/feed` es nuevo y aplica un
+  score compuesto (proximidad 40% + recencia 30% + interacción 20% +
+  categorías seguidas 10%, ver comentario en `posts.service.feed`). Los
+  pesos son un punto de partida arbitrario, no el resultado de ningún
+  tuning — ajustarlos no requiere cambiar el esquema. La personalización
+  (`User.followedCategories`, un array nativo de Postgres, sin tabla de
+  unión) es opcional: el endpoint es público y solo se activa si hay JWT
+  válido, vía `OptionalJwtAuthGuard` (no tira 401 si no hay token).
 
 ## Estado actual (hecho)
 
@@ -94,18 +111,25 @@ Backend, módulo por módulo:
   Promover un moderador todavía es manual (ver README) — no hay panel
   admin.
 - `posts` ahora también soporta `expiresAt` (opcional al crear; automático
-  para ACCIDENTE/INCIDENTE/AVISO si no se manda uno). `GET /posts/nearby`
-  excluye posts vencidos además de los ocultos.
+  para ACCIDENTE/INCIDENTE/AVISO si no se manda uno). Los posts de
+  categorías de animales (`ANIMAL_PERDIDO`, `ANIMAL_ENCONTRADO`,
+  `ADOPCION`) requieren un bloque `animal` (especie, nombre, color,
+  características, sexo, edad aproximada, condiciones de adopción,
+  contacto) y los `EVENTO` requieren `event` (fecha/hora `startsAt`,
+  organizador) — ambos validados en el servicio, prohibidos en cualquier
+  otra categoría. `GET /posts/:id` devuelve la ficha completa (con
+  `animalDetails`/`eventDetails`, autor y ubicación). `GET /posts/nearby`
+  sigue ordenando solo por distancia (pines de mapa) y excluye vencidos y
+  ocultos; `GET /posts/feed` es el feed rankeado (ver arriba), y
+  `PATCH /users/me/followed-categories` deja que el usuario elija qué
+  categorías seguir para ese ranking.
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
-paso): ranking/relevancia del feed más allá de distancia (el "feed
-inteligente" de la sección 18 del brief — priorizar por interacción,
-categorías seguidas, etc. — no está hecho, solo el filtrado por vencimiento),
-panel admin (ni siquiera para promover moderadores), animales
-perdidos/encontrados/adopción como entidades propias (por ahora son solo
-categorías de `Post`), eventos como entidad con más estructura (organizador,
-imagen — hoy es solo una categoría de `Post` con `expiresAt`), ventas,
-notificaciones, frontend/mapa.
+paso): fotos en ningún modelo (`Post`, `Business`, `AnimalDetails`, etc. —
+falta decidir e integrar S3/Cloudinary), panel admin (ni siquiera para
+promover moderadores), vincular el organizador de un evento a un `Business`
+existente (hoy `organizerName` es texto libre), ventas, notificaciones,
+frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
@@ -116,14 +140,18 @@ notificaciones, frontend/mapa.
 4. ~~`reports` + moderación básica (ocultar contenido reportado)~~ — hecho.
 5. ~~Diferenciar posts temporales de permanentes~~ — hecho vía
    `Post.expiresAt` + TTL por categoría.
-6. Animales: decidir si conviene modelarlos como sub-tipo de `Post` con
-   campos JSON opcionales, o tablas propias (`lost_pets`, `found_pets`,
-   `adoptions`) — evaluar cuando haya casos de uso reales.
-7. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
-   consumiendo `GET /posts/nearby`.
-8. Notificaciones (FCM) cuando haya push cerca del usuario.
-9. Negocios verificados + panel de administración de negocio.
-10. Ventas, promociones, monetización — dejar para cuando haya comunidad activa.
+6. ~~Animales (`AnimalDetails`) y eventos (`EventDetails`) con campos
+   propios~~ — hecho, como extensión 1:1 de `Post`.
+7. ~~Ranking de feed (`GET /posts/feed`)~~ — hecho: proximidad + recencia +
+   interacción + categorías seguidas. Pendiente afinar pesos con datos
+   reales cuando haya usuarios.
+8. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
+   consumiendo `GET /posts/nearby` y el feed consumiendo `GET /posts/feed`.
+9. Notificaciones (FCM) cuando haya push cerca del usuario.
+10. Negocios verificados + panel de administración de negocio.
+11. Ventas, promociones, monetización — dejar para cuando haya comunidad activa.
+12. Imágenes (S3/Cloudinary) — hace falta para negocios, posts y animales,
+    quedó pendiente en todos los módulos hasta ahora.
 
 Cada uno de estos puntos puede pedirse como una sesión aparte ("agreguemos
 el módulo de negocios", "ahora comentarios y reacciones") sin tener que

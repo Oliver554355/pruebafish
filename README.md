@@ -17,7 +17,12 @@ el directorio de negocios/lugares (`POST /businesses`, `GET
 /comments`, `GET /comments`, `DELETE /comments/:id`, `POST /reactions`, `GET
 /reactions/summary`), y reportes/moderación básica (`POST /reports`, `GET
 /reports` y `PATCH /reports/:id` — estos dos últimos solo para usuarios con
-`isModerator = true`).
+`isModerator = true`). Los posts de animales (`ANIMAL_PERDIDO`,
+`ANIMAL_ENCONTRADO`, `ADOPCION`) y de eventos (`EVENTO`) llevan datos
+propios (`animal`/`event` al crear, `GET /posts/:id` para verlos), y `GET
+/posts/feed` arma un feed rankeado (cercanía + recencia + interacción +
+categorías seguidas, `PATCH /users/me/followed-categories`) en vez de solo
+ordenar por distancia como `/posts/nearby`.
 
 ### Levantar en local
 
@@ -48,13 +53,32 @@ curl -X POST localhost:3000/posts -H "Content-Type: application/json" \
   -H "Authorization: Bearer <TOKEN>" \
   -d '{"category":"ACCIDENTE","title":"Choque en Carretera Central","lat":-11.93,"lng":-76.70}'
 
-# Un EVENTO sí conviene mandarlo explícito (la fecha del evento)
+# EVENTO requiere el bloque "event" con la fecha; se usa como expiresAt
+# si no se manda uno explicito (el evento deja de listarse cuando ya paso)
 curl -X POST localhost:3000/posts -H "Content-Type: application/json" \
   -H "Authorization: Bearer <TOKEN>" \
-  -d '{"category":"EVENTO","title":"Feria en la plaza","lat":-11.93,"lng":-76.70,"expiresAt":"2026-09-20T23:59:00Z"}'
+  -d '{"category":"EVENTO","title":"Feria en la plaza","lat":-11.93,"lng":-76.70,
+       "event":{"startsAt":"2026-09-20T18:00:00Z","organizerName":"Municipalidad"}}'
 
-# Ver publicaciones cercanas (ya excluye vencidas y ocultas)
+# Animales requieren el bloque "animal" (especie, nombre, color, etc.)
+curl -X POST localhost:3000/posts -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"category":"ANIMAL_PERDIDO","title":"Se perdio Firulais","lat":-11.93,"lng":-76.70,
+       "animal":{"species":"PERRO","petName":"Firulais","color":"marron","contactPhone":"999999999"}}'
+
+# Ficha completa de un post (incluye animalDetails/eventDetails si aplica)
+curl "localhost:3000/posts/<POST_ID>"
+
+# Ver publicaciones cercanas (ya excluye vencidas y ocultas) — orden simple por distancia
 curl "localhost:3000/posts/nearby?lat=-11.93&lng=-76.70&radius=3000"
+
+# Feed rankeado (cercania + recencia + interaccion + categorias seguidas)
+curl "localhost:3000/posts/feed?lat=-11.93&lng=-76.70&radius=3000"
+
+# Elegir que categorias seguir (afecta el ranking del feed cuando estas logueado)
+curl -X PATCH localhost:3000/users/me/followed-categories -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"categories":["ACCIDENTE","EVENTO"]}'
 
 # Recorrer la jerarquia geografica (sin parentId devuelve el nivel raiz)
 curl "localhost:3000/locations"
