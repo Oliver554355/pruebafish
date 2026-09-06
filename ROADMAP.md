@@ -85,6 +85,19 @@ programando está resumido acá.
   (`User.followedCategories`, un array nativo de Postgres, sin tabla de
   unión) es opcional: el endpoint es público y solo se activa si hay JWT
   válido, vía `OptionalJwtAuthGuard` (no tira 401 si no hay token).
+- **Negocios verificados**: `Business.ownerId` (nullable) es el dueño real,
+  separado de `createdById` (quien lo dio de alta, que puede ser cualquiera
+  y no necesariamente el dueño). `BusinessClaim` es la solicitud para pasar
+  de uno a otro — no se asigna `ownerId` directo por API, hay que pasar por
+  una revisión. Al aprobar una solicitud (`business-claims.service.update`),
+  una transacción hace tres cosas atómicamente: setea `ownerId` +
+  `verified = true` en el negocio, marca esa solicitud `APROBADO`, y
+  rechaza cualquier otra solicitud `PENDIENTE` para el mismo negocio (solo
+  puede haber un dueño). Una vez que `ownerId` existe, `businesses.update`
+  deja de aceptar al `createdById` original — el dueño verificado manda.
+  Aprobar/rechazar es exclusivo de moderadores (mismo `ModeratorGuard` que
+  `reports`); no hay verificación real de identidad (RUC, documento) — el
+  moderador decide a criterio con el `message` que manda quien reclama.
 
 ## Estado actual (hecho)
 
@@ -105,7 +118,8 @@ Backend, módulo por módulo:
   `GET /businesses/nearby` (público, misma búsqueda por radio con PostGIS
   que `posts`, con filtro opcional de categoría), `GET /businesses` (listado
   plano por categoría/zona), `GET /businesses/:id`, `PATCH /businesses/:id`
-  (solo quien lo creó puede editarlo — no hay "negocio verificado" todavía).
+  (edita quien lo creó, o el dueño verificado si ya tiene uno — ver
+  `business-claims` abajo).
 - `comments`: `POST /comments` (protegido, `postId` o `businessId` +
   `content`, y `rating` 1-5 opcional solo si es de un negocio), `GET
   /comments?postId=` o `?businessId=` (público), `DELETE /comments/:id`
@@ -142,12 +156,21 @@ Backend, módulo por módulo:
   subió). `GET /posts/:id` y `GET /businesses/:id` ahora incluyen `photos`
   en la ficha. `docker-compose.yml` trae MinIO listo para desarrollo local
   (hay que crear el bucket a mano una vez, ver README).
+- `business-claims`: `POST /business-claims` (protegido, cualquier usuario,
+  `businessId` + `message` opcional) — falla si el negocio ya tiene dueño o
+  si ya tenés una solicitud pendiente para ese mismo negocio. `GET
+  /business-claims?status=&businessId=` y `PATCH /business-claims/:id`
+  (ambos solo moderadores); al aprobar, el negocio queda `verified: true`
+  con `ownerId` asignado y pierde vigencia el permiso de edición del
+  `createdById` original.
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
-paso): panel admin (ni siquiera para promover moderadores), URLs firmadas o
-control de acceso por foto (hoy todo bucket público), vincular el
-organizador de un evento a un `Business` existente (hoy `organizerName` es
-texto libre), ventas, notificaciones, frontend/mapa.
+paso): panel admin (ni siquiera para promover moderadores ni para revisar
+`business-claims` desde una UI — todo vía API por ahora), verificación real
+de identidad en los reclamos de negocio (hoy es a criterio del moderador),
+URLs firmadas o control de acceso por foto (hoy todo bucket público),
+vincular el organizador de un evento a un `Business` existente (hoy
+`organizerName` es texto libre), ventas, notificaciones, frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
@@ -165,10 +188,13 @@ texto libre), ventas, notificaciones, frontend/mapa.
    reales cuando haya usuarios.
 8. ~~Fotos (`Photo` + storage S3-compatible)~~ — hecho, sobre posts y
    negocios. MinIO en `docker-compose.yml` para desarrollo/self-host.
-9. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
-   consumiendo `GET /posts/nearby` y el feed consumiendo `GET /posts/feed`.
-10. Notificaciones (FCM) cuando haya push cerca del usuario.
-11. Negocios verificados + panel de administración de negocio.
+9. ~~Negocios verificados (`BusinessClaim`)~~ — hecho: reclamo, aprobación
+   por moderador, `ownerId`/`verified` en `Business`. Falta el panel de
+   administración de negocio (que el dueño edite promociones, vea
+   estadísticas, etc. — sección 6 del brief) una vez haya frontend.
+10. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
+    consumiendo `GET /posts/nearby` y el feed consumiendo `GET /posts/feed`.
+11. Notificaciones (FCM) cuando haya push cerca del usuario.
 12. Ventas, promociones, monetización — dejar para cuando haya comunidad activa.
 
 Cada uno de estos puntos puede pedirse como una sesión aparte ("agreguemos

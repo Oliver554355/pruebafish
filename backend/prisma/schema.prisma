@@ -21,7 +21,10 @@ model User {
   followedCategories PostCategory[] @default([])
   createdAt       DateTime   @default(now())
   posts           Post[]
-  businesses      Business[]
+  businessesCreated Business[] @relation("BusinessCreatedBy")
+  businessesOwned   Business[] @relation("BusinessOwner")
+  businessClaimsMade     BusinessClaim[] @relation("BusinessClaimsMade")
+  businessClaimsReviewed BusinessClaim[] @relation("BusinessClaimsReviewed")
   comments        Comment[]
   reactions       Reaction[]
   reportsMade     Report[]   @relation("ReportsMade")
@@ -165,8 +168,10 @@ enum BusinessCategory {
 // Directorio de negocios/lugares. "geog" (geography(Point,4326) + indice
 // GIST) se agrega en prisma/postgis-extensions.sql, igual que en Post.
 // createdById es quien dio de alta el lugar (cualquier usuario, como en
-// OSM/Google Maps) — no confundir con un futuro "owner" de negocio
-// verificado (roadmap #9), que todavia no existe.
+// OSM/Google Maps) y sigue pudiendo editarlo mientras nadie lo reclame.
+// ownerId es el dueño verificado (ver BusinessClaim): una vez asignado,
+// solo el/la owner puede editar, no ya cualquiera que haya sido
+// createdById.
 model Business {
   id          String           @id @default(uuid())
   category    BusinessCategory
@@ -180,7 +185,11 @@ model Business {
   locationId  String?
   location    Location?        @relation(fields: [locationId], references: [id])
   createdById String
-  createdBy   User             @relation(fields: [createdById], references: [id])
+  createdBy   User             @relation("BusinessCreatedBy", fields: [createdById], references: [id])
+  ownerId     String?
+  owner       User?            @relation("BusinessOwner", fields: [ownerId], references: [id])
+  verified    Boolean          @default(false)
+  claims      BusinessClaim[]
   comments    Comment[]
   reactions   Reaction[]
   reports     Report[]
@@ -191,6 +200,34 @@ model Business {
 
   @@index([category])
   @@index([locationId])
+}
+
+enum BusinessClaimStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+// Solicitud de un usuario para convertirse en dueño verificado de un
+// negocio ya cargado (por otra persona o por si mismo, via OSM-style).
+// Al aprobarse (PATCH /business-claims/:id), business-claims.service
+// setea Business.ownerId + verified=true en una transaccion, y rechaza
+// cualquier otra solicitud pendiente para el mismo negocio.
+model BusinessClaim {
+  id           String              @id @default(uuid())
+  businessId   String
+  business     Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                @relation("BusinessClaimsMade", fields: [userId], references: [id])
+  message      String?
+  status       BusinessClaimStatus @default(PENDIENTE)
+  reviewedById String?
+  reviewedBy   User?               @relation("BusinessClaimsReviewed", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  createdAt    DateTime            @default(now())
+
+  @@index([businessId])
+  @@index([status])
 }
 
 // Comentario generico: cuelga de un Post o de un Business (exactamente uno

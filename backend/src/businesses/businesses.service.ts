@@ -18,6 +18,8 @@ interface NearbyBusinessRow {
   lng: number;
   locationId: string | null;
   createdById: string;
+  ownerId: string | null;
+  verified: boolean;
   createdAt: Date;
   distance: number;
 }
@@ -49,7 +51,7 @@ export class BusinessesService {
     return this.prisma.$queryRaw<NearbyBusinessRow[]>(Prisma.sql`
       SELECT
         id, category, name, description, address, phone, hours, lat, lng,
-        "locationId", "createdById", "createdAt",
+        "locationId", "createdById", "ownerId", verified, "createdAt",
         ST_Distance(geog, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography) AS distance
       FROM "Business"
       WHERE ST_DWithin(
@@ -91,9 +93,13 @@ export class BusinessesService {
 
   async update(id: string, userId: string, dto: UpdateBusinessDto) {
     const business = await this.findOne(id);
-    // Mientras no exista el flujo de "negocio verificado" (roadmap #9),
-    // solo quien lo dio de alta puede editarlo.
-    if (business.createdById !== userId) {
+    // Si ya tiene dueño verificado (ver BusinessClaim), solo ese dueño
+    // puede editar — el createdById original pierde el permiso. Sin
+    // verificar todavia, sigue mandando quien lo dio de alta.
+    const canEdit = business.ownerId
+      ? business.ownerId === userId
+      : business.createdById === userId;
+    if (!canEdit) {
       throw new ForbiddenException('No podés editar este negocio');
     }
     return this.prisma.business.update({ where: { id }, data: dto });

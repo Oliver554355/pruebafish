@@ -25,7 +25,10 @@ categorías seguidas, `PATCH /users/me/followed-categories`) en vez de solo
 ordenar por distancia como `/posts/nearby`. Las fotos de posts y negocios
 (`POST /photos` con `multipart/form-data`, `DELETE /photos/:id`) se suben a
 un storage S3-compatible (MinIO local vía `docker-compose.yml`, o un S3 real
-en producción).
+en producción). Cualquiera puede pedir ser el dueño verificado de un
+negocio (`POST /business-claims`); un moderador lo aprueba o rechaza
+(`GET`/`PATCH /business-claims/:id`) y, al aprobarse, ese negocio pasa a
+tener `verified: true` y solo esa persona puede editarlo de ahí en más.
 
 ### Levantar en local
 
@@ -141,4 +144,16 @@ curl -X POST localhost:3000/photos \
   -H "Authorization: Bearer <TOKEN>" \
   -F "postId=<POST_ID>" \
   -F "file=@/ruta/a/foto.jpg"
+
+# Reclamar un negocio (pasa a PENDIENTE hasta que un moderador lo revise)
+curl -X POST localhost:3000/business-claims -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"businessId":"<BUSINESS_ID>","message":"Soy el dueño, mi telefono ya esta en la ficha"}'
+
+# El moderador revisa y aprueba (mismo <MOD_TOKEN> de arriba)
+curl "localhost:3000/business-claims?status=PENDIENTE" -H "Authorization: Bearer <MOD_TOKEN>"
+
+curl -X PATCH localhost:3000/business-claims/<CLAIM_ID> -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MOD_TOKEN>" \
+  -d '{"status":"APROBADO"}'
 ```
