@@ -13,7 +13,9 @@ geolocalizadas (`POST /posts`, `GET /posts/nearby`), la jerarquía
 geográfica País → Región → Provincia → Distrito → Zona (`GET /locations`) y
 el directorio de negocios/lugares (`POST /businesses`, `GET
 /businesses/nearby`, `GET /businesses`, `GET /businesses/:id`, `PATCH
-/businesses/:id`).
+/businesses/:id`), y comentarios/reacciones sobre posts o negocios (`POST
+/comments`, `GET /comments`, `DELETE /comments/:id`, `POST /reactions`, `GET
+/reactions/summary`).
 
 ### Levantar en local
 
@@ -57,4 +59,21 @@ curl -X POST localhost:3000/businesses -H "Content-Type: application/json" \
 
 # Negocios cerca de un punto (opcionalmente filtrado por categoria)
 curl "localhost:3000/businesses/nearby?lat=-11.93&lng=-76.70&radius=3000&category=RESTAURANTE"
+
+# Comentar un post
+curl -X POST localhost:3000/comments -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"postId":"<POST_ID>","content":"Cuidado, sigue habiendo trafico"}'
+
+# Reseñar un negocio (comentario + rating 1-5)
+curl -X POST localhost:3000/comments -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"businessId":"<BUSINESS_ID>","content":"Buena sazon","rating":5}'
+
+# Reaccionar (like) a un post — repetir la misma llamada la saca (toggle)
+curl -X POST localhost:3000/reactions -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"postId":"<POST_ID>"}'
+
+curl "localhost:3000/reactions/summary?postId=<POST_ID>"
 ```

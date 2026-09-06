@@ -66,7 +66,23 @@ export class BusinessesService {
   async findOne(id: string) {
     const business = await this.prisma.business.findUnique({ where: { id } });
     if (!business) throw new NotFoundException('Negocio no encontrado');
-    return business;
+
+    // La "ficha" del negocio (seccion 5 del brief) muestra una calificacion
+    // tipo "4.6/5": la calculamos de los Comment con rating, sin necesitar
+    // una tabla "reviews" separada.
+    const ratingAgg = await this.prisma.comment.aggregate({
+      where: { businessId: id, rating: { not: null } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    return {
+      ...business,
+      rating: {
+        average: ratingAgg._avg.rating,
+        count: ratingAgg._count.rating,
+      },
+    };
   }
 
   async update(id: string, userId: string, dto: UpdateBusinessDto) {

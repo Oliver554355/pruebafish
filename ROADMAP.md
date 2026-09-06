@@ -29,6 +29,13 @@ programando está resumido acá.
   insertar filas, no migrar el esquema. `Post.locationId` es opcional: la
   búsqueda por cercanía ya funciona solo con lat/lng, la zona es metadata
   adicional (para filtros/breadcrumbs futuros).
+- **Comentarios/reacciones genéricos**: `Comment` y `Reaction` cuelgan de
+  `Post` o `Business` mediante dos FKs opcionales (`postId`/`businessId`),
+  validando en el servicio que se use exactamente una — no una tabla por
+  tipo de contenido, y no un `targetType`/`targetId` sin FK real (perdería
+  integridad referencial y el cascade on delete). Las reseñas de negocio
+  ("Calificación 4.6/5") son simplemente un `Comment` con `rating` (1-5); el
+  promedio se calcula al vuelo en `businesses.findOne`, sin tabla `reviews`.
 
 ## Estado actual (hecho)
 
@@ -50,21 +57,30 @@ Backend, módulo por módulo:
   que `posts`, con filtro opcional de categoría), `GET /businesses` (listado
   plano por categoría/zona), `GET /businesses/:id`, `PATCH /businesses/:id`
   (solo quien lo creó puede editarlo — no hay "negocio verificado" todavía).
+- `comments`: `POST /comments` (protegido, `postId` o `businessId` +
+  `content`, y `rating` 1-5 opcional solo si es de un negocio), `GET
+  /comments?postId=` o `?businessId=` (público), `DELETE /comments/:id`
+  (solo el autor). `GET /businesses/:id` ahora devuelve `rating: {average,
+  count}` calculado de esos comentarios.
+- `reactions`: `POST /reactions` (protegido, toggle: reaccionar de nuevo
+  quita la reacción) y `GET /reactions/summary?postId=` o `?businessId=`
+  (público, conteo por tipo). Por ahora solo existe `LIKE`; el enum
+  `ReactionType` se puede ampliar sin tocar la estructura de la tabla.
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
-paso): calificaciones/reseñas de negocios, comentarios, reacciones,
-reportes/moderación, animales perdidos/encontrados/adopción como entidades
-propias (por ahora son solo categorías de `Post`), eventos, ventas,
-notificaciones, panel admin, frontend/mapa.
+paso): reportes/moderación, animales perdidos/encontrados/adopción como
+entidades propias (por ahora son solo categorías de `Post`), eventos,
+ventas, notificaciones, panel admin, frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
 1. ~~Tabla `locations` con la jerarquía país→región→provincia→distrito→zona~~ — hecho.
-2. ~~Entidad `Business`/`Place` (directorio de negocios)~~ — hecho. Falta:
-   calificaciones/reseñas (sección 5 del brief) — se puede resolver junto
-   con el paso 3 (comments/reactions) reutilizándolos sobre `Business`.
-3. `comments` y `reactions` — sobre `Post` y `Business`.
-4. `reports` + moderación básica (ocultar contenido reportado).
+2. ~~Entidad `Business`/`Place` (directorio de negocios)~~ — hecho.
+3. ~~`comments` y `reactions` sobre `Post` y `Business`~~ — hecho (incluye
+   calificación de negocios vía `Comment.rating`).
+4. `reports` + moderación básica (ocultar contenido reportado) — ahora que
+   hay contenido generado por usuarios (posts, negocios, comentarios) real
+   que moderar.
 5. Diferenciar posts temporales (accidentes, decaen en relevancia) de
    permanentes (negocios, parques) — probablemente un campo `expiresAt` o
    lógica de ranking en el feed, no una tabla nueva.

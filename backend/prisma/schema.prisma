@@ -15,6 +15,8 @@ model User {
   createdAt    DateTime   @default(now())
   posts        Post[]
   businesses   Business[]
+  comments     Comment[]
+  reactions    Reaction[]
 }
 
 enum PostCategory {
@@ -43,6 +45,8 @@ model Post {
   author      User         @relation(fields: [authorId], references: [id])
   locationId  String?
   location    Location?    @relation(fields: [locationId], references: [id])
+  comments    Comment[]
+  reactions   Reaction[]
   createdAt   DateTime     @default(now())
 
   @@index([category])
@@ -109,9 +113,57 @@ model Business {
   location    Location?        @relation(fields: [locationId], references: [id])
   createdById String
   createdBy   User             @relation(fields: [createdById], references: [id])
+  comments    Comment[]
+  reactions   Reaction[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   @@index([category])
   @@index([locationId])
+}
+
+// Comentario generico: cuelga de un Post o de un Business (exactamente uno
+// de los dos, validado en el servicio, no en el esquema). "rating" solo se
+// usa cuando businessId esta presente: asi una review de negocio (seccion 5
+// del brief, "Calificacion 4.6/5") es simplemente un comentario con
+// puntaje, sin necesitar una tabla "reviews" separada.
+model Comment {
+  id         String    @id @default(uuid())
+  content    String
+  rating     Int?
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id])
+  postId     String?
+  post       Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@index([postId])
+  @@index([businessId])
+}
+
+enum ReactionType {
+  LIKE
+}
+
+// Igual que Comment: exactamente uno de postId/businessId, validado en el
+// servicio. Los @@unique evitan que un mismo usuario reaccione dos veces
+// con el mismo tipo al mismo post/negocio (Postgres no compara NULLs como
+// iguales, asi que cada indice solo restringe su propio caso).
+model Reaction {
+  id         String       @id @default(uuid())
+  type       ReactionType @default(LIKE)
+  userId     String
+  user       User         @relation(fields: [userId], references: [id])
+  postId     String?
+  post       Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  businessId String?
+  business   Business?    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+
+  @@unique([userId, postId, type])
+  @@unique([userId, businessId, type])
+  @@index([postId])
+  @@index([businessId])
 }
