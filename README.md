@@ -8,8 +8,9 @@ próximas fases.
 
 Stack: NestJS + Prisma + PostgreSQL/PostGIS.
 
-Cubre: registro/login (JWT), perfil (`/users/me`) y publicaciones
-geolocalizadas (`POST /posts`, `GET /posts/nearby`).
+Cubre: registro/login (JWT), perfil (`/users/me`), publicaciones
+geolocalizadas (`POST /posts`, `GET /posts/nearby`) y la jerarquía
+geográfica País → Región → Provincia → Distrito → Zona (`GET /locations`).
 
 ### Levantar en local
 
@@ -23,6 +24,7 @@ cp .env.example .env
 npm install
 npm run prisma:migrate         # crea las tablas
 psql "$DATABASE_URL" -f prisma/postgis-extensions.sql   # habilita PostGIS + indice geoespacial
+npm run prisma:seed            # carga Perú > Lima > Lima > Lurigancho-Chosica > Chosica
 npm run start:dev
 ```
 
@@ -40,4 +42,8 @@ curl -X POST localhost:3000/posts -H "Content-Type: application/json" \
 
 # Ver publicaciones cercanas
 curl "localhost:3000/posts/nearby?lat=-11.93&lng=-76.70&radius=3000"
+
+# Recorrer la jerarquia geografica (sin parentId devuelve el nivel raiz)
+curl "localhost:3000/locations"
+curl "localhost:3000/locations?parentId=<ID_DE_PERU>"
 ```

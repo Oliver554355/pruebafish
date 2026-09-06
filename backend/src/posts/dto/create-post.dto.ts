@@ -1,4 +1,4 @@
-import { IsEnum, IsLatitude, IsLongitude, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEnum, IsLatitude, IsLongitude, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 import { PostCategory } from '@prisma/client';
 
 export class CreatePostDto {
@@ -18,4 +18,10 @@ export class CreatePostDto {
 
   @IsLongitude()
   lng: number;
+
+  // Zona de la jerarquia Location (ej. "Chosica"). Opcional por ahora: la
+  // busqueda por cercania ya funciona solo con lat/lng.
+  @IsOptional()
+  @IsUUID()
+  locationId?: string;
 }

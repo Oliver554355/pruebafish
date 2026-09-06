@@ -23,6 +23,12 @@ programando está resumido acá.
   (S3/Cloudinary) cuando se implemente esa parte.
 - **Mapas**: pendiente elegir Mapbox vs Google Maps vs OSM — evaluar cuando
   se construya el frontend/mapa.
+- **Jerarquía geográfica**: una sola tabla auto-referenciada `Location`
+  (`type` + `parentId`: PAIS → REGION → PROVINCIA → DISTRITO → ZONA) en vez
+  de una tabla por nivel. Agregar Ate, Santa Anita o una ciudad nueva es
+  insertar filas, no migrar el esquema. `Post.locationId` es opcional: la
+  búsqueda por cercanía ya funciona solo con lat/lng, la zona es metadata
+  adicional (para filtros/breadcrumbs futuros).
 
 ## Estado actual (hecho)
 
@@ -30,22 +36,25 @@ Backend, módulo por módulo:
 - `auth`: registro y login con JWT (bcrypt para passwords).
 - `users`: `GET /users/me` protegido.
 - `posts`: `POST /posts` (protegido, cualquier categoría del enum
-  `PostCategory`) y `GET /posts/nearby` (público, búsqueda por radio en
-  metros usando PostGIS).
+  `PostCategory`, con `locationId` opcional) y `GET /posts/nearby` (público,
+  búsqueda por radio en metros usando PostGIS).
+- `locations`: `GET /locations` (nivel raíz, o hijos con `?parentId=`) y
+  `GET /locations/:id` (con padre e hijos). Seed (`npm run prisma:seed`)
+  carga Perú → Lima (región) → Lima (provincia) → Lurigancho-Chosica →
+  Chosica.
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
 paso): negocios/lugares, comentarios, reacciones, reportes/moderación,
 animales perdidos/encontrados/adopción como entidades propias (por ahora son
 solo categorías de `Post`), eventos, ventas, notificaciones, panel admin,
-frontend/mapa, jerarquía geográfica país→región→distrito→zona (por ahora
-todo es implícitamente Chosica).
+frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
-1. Tabla `locations` con la jerarquía país→región→provincia→distrito→zona,
-   y asociar `Post`/`User` a una zona en vez de asumir Chosica siempre.
+1. ~~Tabla `locations` con la jerarquía país→región→provincia→distrito→zona~~ — hecho.
 2. Entidad `Business`/`Place` (directorio de negocios) con su propia ficha,
-   reutilizando la misma columna `geog` + índice GIST.
+   reutilizando la misma columna `geog` + índice GIST, y opcionalmente
+   `locationId` para agruparlos por zona.
 3. `comments` y `reactions` sobre `Post`.
 4. `reports` + moderación básica (ocultar contenido reportado).
 5. Diferenciar posts temporales (accidentes, decaen en relevancia) de

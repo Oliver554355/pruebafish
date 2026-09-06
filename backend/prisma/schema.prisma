@@ -40,8 +40,36 @@ model Post {
   lng         Float
   authorId    String
   author      User         @relation(fields: [authorId], references: [id])
+  locationId  String?
+  location    Location?    @relation(fields: [locationId], references: [id])
   createdAt   DateTime     @default(now())
 
   @@index([category])
   @@index([createdAt])
+  @@index([locationId])
+}
+
+enum LocationType {
+  PAIS
+  REGION
+  PROVINCIA
+  DISTRITO
+  ZONA
+}
+
+// Jerarquia geografica generica (Peru > Lima > Lima > Lurigancho-Chosica > Chosica)
+// como una sola tabla auto-referenciada: agregar un distrito o ciudad nueva
+// mas adelante es insertar una fila, no una migracion.
+model Location {
+  id        String       @id @default(uuid())
+  type      LocationType
+  name      String
+  parentId  String?
+  parent    Location?    @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children  Location[]   @relation("LocationHierarchy")
+  posts     Post[]
+  createdAt DateTime     @default(now())
+
+  @@index([parentId])
+  @@index([type])
 }
