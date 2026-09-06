@@ -26,6 +26,7 @@ model User {
   reactions       Reaction[]
   reportsMade     Report[]   @relation("ReportsMade")
   reportsReviewed Report[]   @relation("ReportsReviewed")
+  photos          Photo[]
 }
 
 enum PostCategory {
@@ -70,6 +71,7 @@ model Post {
   // respectivamente (validado en posts.service.ts, no en el esquema).
   animalDetails AnimalDetails?
   eventDetails  EventDetails?
+  photos      Photo[]
   createdAt   DateTime     @default(now())
 
   @@index([category])
@@ -182,6 +184,7 @@ model Business {
   comments    Comment[]
   reactions   Reaction[]
   reports     Report[]
+  photos      Photo[]
   hidden      Boolean          @default(false)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -276,4 +279,24 @@ model Report {
   @@index([postId])
   @@index([businessId])
   @@index([commentId])
+}
+
+// Foto generica: exactamente uno de postId/businessId (validado en el
+// servicio, mismo patron que Comment/Reaction/Report). El archivo en si NO
+// vive en Postgres — "url" apunta a un bucket S3-compatible (AWS real o
+// self-hosted como MinIO, ver StorageService); aca solo se guarda el
+// metadato. Ver ROADMAP.md para la config de storage.
+model Photo {
+  id           String    @id @default(uuid())
+  url          String
+  postId       String?
+  post         Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  businessId   String?
+  business     Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime  @default(now())
+
+  @@index([postId])
+  @@index([businessId])
 }

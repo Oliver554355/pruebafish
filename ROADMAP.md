@@ -19,8 +19,21 @@ programando está resumido acá.
   fusionar/escalar horizontalmente después).
 - **Auth**: JWT sin estado (permite correr varias instancias del backend
   detrás de un load balancer sin sesiones compartidas).
-- **Imágenes**: no van a la base de datos; se subirán a un bucket externo
-  (S3/Cloudinary) cuando se implemente esa parte.
+- **Imágenes**: nunca en Postgres. `Photo` (genérico, mismo patrón
+  `postId`/`businessId` opcionales que `Comment`/`Reaction`/`Report`) guarda
+  solo la URL; el archivo va a un storage **S3-compatible** vía
+  `StorageService` (`backend/src/photos/storage.service.ts`), usando
+  `@aws-sdk/client-s3` — funciona igual contra AWS S3 real o contra un
+  self-host como **MinIO** (agregado a `docker-compose.yml`), cambiando
+  solo variables de entorno (`S3_ENDPOINT`, `S3_FORCE_PATH_STYLE`). Se
+  asume bucket público de lectura y se arma la URL directo con
+  `S3_PUBLIC_BASE_URL` — no hay URLs firmadas ni control de acceso por
+  archivo todavía, eso puede hacer falta si el contenido debe ser privado
+  más adelante. Subida vía `multipart/form-data` con `FileInterceptor` +
+  `memoryStorage()` (el archivo pasa por memoria, no se escribe a disco,
+  antes de subirse al bucket). Límite 5MB, solo JPEG/PNG/WEBP. Permisos:
+  igual que en `Business.update`, solo quien es dueño del post/negocio
+  puede agregarle fotos — no hay todavía un caso de "colaboradores".
 - **Mapas**: pendiente elegir Mapbox vs Google Maps vs OSM — evaluar cuando
   se construya el frontend/mapa.
 - **Jerarquía geográfica**: una sola tabla auto-referenciada `Location`
@@ -123,13 +136,18 @@ Backend, módulo por módulo:
   ocultos; `GET /posts/feed` es el feed rankeado (ver arriba), y
   `PATCH /users/me/followed-categories` deja que el usuario elija qué
   categorías seguir para ese ranking.
+- `photos`: `POST /photos` (protegido, `multipart/form-data` con campo
+  `file` + `postId` o `businessId`) sube la imagen al storage S3-compatible
+  y crea el registro; `DELETE /photos/:id` borra ambos (solo quien la
+  subió). `GET /posts/:id` y `GET /businesses/:id` ahora incluyen `photos`
+  en la ficha. `docker-compose.yml` trae MinIO listo para desarrollo local
+  (hay que crear el bucket a mano una vez, ver README).
 
 Todavía NO implementado (a propósito, para no sobre-construir en el primer
-paso): fotos en ningún modelo (`Post`, `Business`, `AnimalDetails`, etc. —
-falta decidir e integrar S3/Cloudinary), panel admin (ni siquiera para
-promover moderadores), vincular el organizador de un evento a un `Business`
-existente (hoy `organizerName` es texto libre), ventas, notificaciones,
-frontend/mapa.
+paso): panel admin (ni siquiera para promover moderadores), URLs firmadas o
+control de acceso por foto (hoy todo bucket público), vincular el
+organizador de un evento a un `Business` existente (hoy `organizerName` es
+texto libre), ventas, notificaciones, frontend/mapa.
 
 ## Próximos pasos sugeridos (uno por sesión, para cuidar tokens)
 
@@ -145,13 +163,13 @@ frontend/mapa.
 7. ~~Ranking de feed (`GET /posts/feed`)~~ — hecho: proximidad + recencia +
    interacción + categorías seguidas. Pendiente afinar pesos con datos
    reales cuando haya usuarios.
-8. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
+8. ~~Fotos (`Photo` + storage S3-compatible)~~ — hecho, sobre posts y
+   negocios. MinIO en `docker-compose.yml` para desarrollo/self-host.
+9. Frontend: elegir Flutter vs React Native, y armar la pantalla de mapa
    consumiendo `GET /posts/nearby` y el feed consumiendo `GET /posts/feed`.
-9. Notificaciones (FCM) cuando haya push cerca del usuario.
-10. Negocios verificados + panel de administración de negocio.
-11. Ventas, promociones, monetización — dejar para cuando haya comunidad activa.
-12. Imágenes (S3/Cloudinary) — hace falta para negocios, posts y animales,
-    quedó pendiente en todos los módulos hasta ahora.
+10. Notificaciones (FCM) cuando haya push cerca del usuario.
+11. Negocios verificados + panel de administración de negocio.
+12. Ventas, promociones, monetización — dejar para cuando haya comunidad activa.
 
 Cada uno de estos puntos puede pedirse como una sesión aparte ("agreguemos
 el módulo de negocios", "ahora comentarios y reacciones") sin tener que

@@ -12,5 +12,24 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  # Storage S3-compatible self-hosted para las fotos (posts, negocios).
+  # Alternativa a una cuenta de AWS real: solo cambiar las variables S3_*
+  # en backend/.env para apuntar a un S3 de verdad el dia que haga falta.
+  # Despues de levantarlo hay que crear el bucket a mano una vez (ver
+  # README.md): no se crea solo.
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: chosica
+      MINIO_ROOT_PASSWORD: chosica123
+    ports:
+      - "9000:9000" # API S3
+      - "9001:9001" # consola web
+    volumes:
+      - minio_data:/data
+
 volumes:
   db_data:
+  minio_data:

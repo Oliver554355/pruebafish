@@ -107,6 +107,7 @@ export class PostsService {
         animalDetails: true,
         eventDetails: true,
         location: true,
+        photos: true,
         author: { select: { id: true, username: true } },
       },
     });

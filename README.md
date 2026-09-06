@@ -22,13 +22,25 @@ el directorio de negocios/lugares (`POST /businesses`, `GET
 propios (`animal`/`event` al crear, `GET /posts/:id` para verlos), y `GET
 /posts/feed` arma un feed rankeado (cercanía + recencia + interacción +
 categorías seguidas, `PATCH /users/me/followed-categories`) en vez de solo
-ordenar por distancia como `/posts/nearby`.
+ordenar por distancia como `/posts/nearby`. Las fotos de posts y negocios
+(`POST /photos` con `multipart/form-data`, `DELETE /photos/:id`) se suben a
+un storage S3-compatible (MinIO local vía `docker-compose.yml`, o un S3 real
+en producción).
 
 ### Levantar en local
 
 ```bash
-# 1. Base de datos
+# 1. Base de datos + MinIO (storage de fotos)
 docker compose up -d
+
+# 1.b Crear el bucket de MinIO (una sola vez; no se crea solo).
+# Opcion facil: abrir http://localhost:9001 (user/pass: chosica/chosica123),
+# crear el bucket "chosica-photos" y ponerlo como publico de lectura
+# (Access Policy: Public) desde la consola web.
+# Opcion CLI (si tenes "mc" instalado):
+#   mc alias set local http://localhost:9000 chosica chosica123
+#   mc mb local/chosica-photos
+#   mc anonymous set download local/chosica-photos
 
 # 2. Backend
 cd backend
@@ -123,4 +135,10 @@ curl "localhost:3000/reports?status=PENDIENTE" -H "Authorization: Bearer <MOD_TO
 curl -X PATCH localhost:3000/reports/<REPORT_ID> -H "Content-Type: application/json" \
   -H "Authorization: Bearer <MOD_TOKEN>" \
   -d '{"status":"REVISADO","hideContent":true}'
+
+# Subir una foto a un post (solo el autor del post/negocio puede agregarle fotos)
+curl -X POST localhost:3000/photos \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F "postId=<POST_ID>" \
+  -F "file=@/ruta/a/foto.jpg"
 ```

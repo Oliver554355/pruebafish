@@ -65,7 +65,10 @@ export class BusinessesService {
   }
 
   async findOne(id: string) {
-    const business = await this.prisma.business.findUnique({ where: { id } });
+    const business = await this.prisma.business.findUnique({
+      where: { id },
+      include: { photos: true },
+    });
     if (!business) throw new NotFoundException('Negocio no encontrado');
 
     // La "ficha" del negocio (seccion 5 del brief) muestra una calificacion
