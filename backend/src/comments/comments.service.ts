@@ -5,14 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsDto } from './dto/list-comments.dto';
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
-  create(authorId: string, dto: CreateCommentDto) {
+  async create(authorId: string, dto: CreateCommentDto) {
     if (!!dto.postId === !!dto.businessId) {
       throw new BadRequestException(
         'Debe indicar exactamente uno de postId o businessId',
@@ -23,7 +27,7 @@ export class CommentsService {
         'rating solo aplica a comentarios de un negocio',
       );
     }
-    return this.prisma.comment.create({
+    const comment = await this.prisma.comment.create({
       data: {
         content: dto.content,
         rating: dto.rating,
@@ -32,6 +36,12 @@ export class CommentsService {
         businessId: dto.businessId,
       },
     });
+
+    // Fire-and-forget: si el push falla (Firebase caido, token invalido,
+    // etc.) no tiene que tumbar la creacion del comentario, que ya paso.
+    this.notifyOwner(comment.authorId, dto).catch(() => {});
+
+    return comment;
   }
 
   findMany(query: ListCommentsDto) {
@@ -58,5 +68,41 @@ export class CommentsService {
       throw new ForbiddenException('No podés borrar este comentario');
     }
     await this.prisma.comment.delete({ where: { id } });
+  }
+
+  // Avisa al autor del post, o al dueño (verificado si ya lo tiene, si no
+  // quien lo creo) del negocio comentado -- mismo criterio de "dueño
+  // efectivo" que ya usa BusinessesService.update. No se notifica a uno
+  // mismo (comentar tu propio post/negocio).
+  private async notifyOwner(commenterId: string, dto: CreateCommentDto) {
+    let targetUserId: string | undefined;
+    if (dto.postId) {
+      const post = await this.prisma.post.findUnique({
+        where: { id: dto.postId },
+        select: { authorId: true },
+      });
+      targetUserId = post?.authorId;
+    } else if (dto.businessId) {
+      const business = await this.prisma.business.findUnique({
+        where: { id: dto.businessId },
+        select: { ownerId: true, createdById: true },
+      });
+      targetUserId = business?.ownerId ?? business?.createdById;
+    }
+    if (!targetUserId || targetUserId === commenterId) return;
+
+    const commenter = await this.prisma.user.findUnique({
+      where: { id: commenterId },
+      select: { username: true },
+    });
+    await this.notifications.sendToUser(targetUserId, {
+      title: '💬 Nuevo comentario',
+      body: `${commenter?.username ?? 'Alguien'} comentó tu publicación`,
+      data: {
+        type: 'comment',
+        postId: dto.postId ?? '',
+        businessId: dto.businessId ?? '',
+      },
+    });
   }
 }

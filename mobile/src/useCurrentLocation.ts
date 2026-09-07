@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
+import { updateMyLocation } from './api/users';
 
 interface LocationState {
   coords: { lat: number; lng: number } | null;
@@ -35,16 +36,18 @@ export function useCurrentLocation() {
       }
       try {
         const position = await Location.getCurrentPositionAsync({});
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
         if (!cancelled) {
-          setState({
-            coords: {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            },
-            loading: false,
-            error: null,
-          });
+          setState({ coords, loading: false, error: null });
         }
+        // Fire-and-forget: mantiene lastLat/lastLng al dia para las
+        // notificaciones push de "algo paso cerca tuyo". Si falla (sin
+        // sesion, sin red) no debe romper la pantalla que pidio la
+        // ubicacion.
+        updateMyLocation(coords.lat, coords.lng).catch(() => {});
       } catch {
         if (!cancelled) {
           setState({

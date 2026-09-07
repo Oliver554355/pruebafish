@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PostCategory, ReportStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Pesos arbitrarios, punto de partida — igual que el ranking de
 // posts.service.feed, sin tuning con datos reales todavia. Base 3/5:
@@ -22,7 +23,10 @@ const MAX_REMOVED_PENALTY = 1;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
@@ -188,7 +192,32 @@ export class UsersService {
       return { following: false };
     }
     await this.prisma.follow.create({ data: { followerId, followingId } });
+
+    const follower = await this.prisma.user.findUnique({
+      where: { id: followerId },
+      select: { username: true },
+    });
+    this.notifications
+      .sendToUser(followingId, {
+        title: '👤 Nuevo seguidor',
+        body: `${follower?.username ?? 'Alguien'} empezó a seguirte`,
+        data: { type: 'follow', userId: followerId },
+      })
+      .catch(() => {});
+
     return { following: true };
+  }
+
+  // Ultima ubicacion conocida (ver User.lastLat/lastLng en el schema):
+  // la app la manda cada vez que obtiene el GPS. Es la base de las
+  // notificaciones push de "algo paso cerca tuyo" (accidente, animal
+  // perdido) -- ver NotificationsService.sendToNearby.
+  updateLocation(id: string, lat: number, lng: number) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { lastLat: lat, lastLng: lng, lastLocationAt: new Date() },
+      select: { id: true },
+    });
   }
 
   getFollowers(userId: string) {

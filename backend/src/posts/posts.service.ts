@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, PostCategory } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { NearbyQueryDto } from './dto/nearby-query.dto';
 import { FeedQueryDto } from './dto/feed-query.dto';
@@ -45,11 +46,33 @@ const ANIMAL_CATEGORIES: PostCategory[] = [
   PostCategory.ADOPCION,
 ];
 
+// Categorias urgentes/geolocalizadas: vale la pena empujarle un push a
+// quien esta cerca, a diferencia de una recomendacion o un aviso que
+// puede esperar a que la vea en el feed. ADOPCION queda afuera a
+// proposito -- es animal, pero no es "algo pasando ahora" como perdido/
+// encontrado.
+const NOTIFY_NEARBY_CATEGORIES: PostCategory[] = [
+  PostCategory.ACCIDENTE,
+  PostCategory.INCIDENTE,
+  PostCategory.ANIMAL_PERDIDO,
+  PostCategory.ANIMAL_ENCONTRADO,
+];
+const NOTIFY_RADIUS_METERS = 5000;
+const NOTIFY_LABELS: Partial<Record<PostCategory, string>> = {
+  ACCIDENTE: '🔔 Accidente cerca tuyo',
+  INCIDENTE: '🔔 Incidente cerca tuyo',
+  ANIMAL_PERDIDO: '🐕 Animal perdido cerca tuyo',
+  ANIMAL_ENCONTRADO: '🐕 Animal encontrado cerca tuyo',
+};
+
 @Injectable()
 export class PostsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
-  create(authorId: string, dto: CreatePostDto) {
+  async create(authorId: string, dto: CreatePostDto) {
     const isAnimalCategory = ANIMAL_CATEGORIES.includes(dto.category);
     const isEventCategory = dto.category === PostCategory.EVENTO;
     const isSaleCategory = dto.category === PostCategory.VENTA;
@@ -90,7 +113,7 @@ export class PostsService {
           ? new Date(Date.now() + ttlHours * 60 * 60 * 1000)
           : null;
 
-    return this.prisma.post.create({
+    const post = await this.prisma.post.create({
       data: {
         category: dto.category,
         title: dto.title,
@@ -121,6 +144,20 @@ export class PostsService {
       },
       include: { animalDetails: true, eventDetails: true, saleDetails: true },
     });
+
+    if (NOTIFY_NEARBY_CATEGORIES.includes(dto.category)) {
+      // Fire-and-forget: el post ya se creo, un push que falla no debe
+      // afectar la respuesta al autor.
+      this.notifications
+        .sendToNearby(dto.lat, dto.lng, NOTIFY_RADIUS_METERS, authorId, {
+          title: NOTIFY_LABELS[dto.category]!,
+          body: dto.title,
+          data: { type: 'nearby-post', postId: post.id },
+        })
+        .catch(() => {});
+    }
+
+    return post;
   }
 
   async findOne(id: string) {

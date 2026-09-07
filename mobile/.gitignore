@@ -40,3 +40,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# credenciales de Firebase (una por entorno/proyecto Firebase, no es
+# universal al repo): pedirsela a quien administre el proyecto de
+# Firebase, o generarla de nuevo en la consola.
+google-services.json
+GoogleService-Info.plist

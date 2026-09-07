@@ -25,3 +25,9 @@ export async function fetchFollowing(userId: string): Promise<FollowEntry[]> {
   const { data } = await api.get<FollowEntry[]>(`/users/${userId}/following`);
   return data;
 }
+
+// Para las notificaciones push de "algo paso cerca tuyo" (ver
+// NotificationsService.sendToNearby en el backend).
+export async function updateMyLocation(lat: number, lng: number) {
+  await api.patch('/users/me/location', { lat, lng });
+}

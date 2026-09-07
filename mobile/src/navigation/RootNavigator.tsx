@@ -13,11 +13,13 @@ import ModerationScreen from '../screens/ModerationScreen';
 import SavedScreen from '../screens/SavedScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import FollowListScreen from '../screens/FollowListScreen';
+import { usePushNotifications } from '../usePushNotifications';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   const { user } = useAuth();
+  usePushNotifications(!!user);
 
   if (!user) {
     return (

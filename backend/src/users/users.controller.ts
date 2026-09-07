@@ -3,6 +3,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateFollowedCategoriesDto } from './dto/update-followed-categories.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
 
 @Controller('users')
 export class UsersController {
@@ -38,6 +39,18 @@ export class UsersController {
       req.user.userId,
       dto.categories,
     );
+  }
+
+  // La app la llama cada vez que obtiene el GPS (ver notifications
+  // "cerca tuyo"): mantiene lastLat/lastLng razonablemente al dia sin
+  // necesitar tracking continuo en background.
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/location')
+  updateLocation(
+    @Request() req: { user: { userId: string } },
+    @Body() dto: UpdateLocationDto,
+  ) {
+    return this.usersService.updateLocation(req.user.userId, dto.lat, dto.lng);
   }
 
   // Rutas con :id van despues de las rutas estaticas ('me', 'me/...') para

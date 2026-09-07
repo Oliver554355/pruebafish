@@ -19,8 +19,17 @@ model User {
   // siga"): un array nativo de Postgres alcanza, no hace falta una tabla
   // de union para esto.
   followedCategories PostCategory[] @default([])
+  // Ultima ubicacion conocida, para notificaciones push de "algo paso
+  // cerca tuyo" (accidente/animal perdido). Se actualiza desde la app
+  // (PATCH /users/me/location) cada vez que se obtiene el GPS, no es la
+  // fuente de verdad de nada mas -- si esta ausente, el usuario
+  // simplemente no recibe esas notificaciones geograficas.
+  lastLat         Float?
+  lastLng         Float?
+  lastLocationAt  DateTime?
   createdAt       DateTime   @default(now())
   posts           Post[]
+  pushTokens      PushToken[]
   businessesCreated Business[] @relation("BusinessCreatedBy")
   businessesOwned   Business[] @relation("BusinessOwner")
   businessClaimsMade     BusinessClaim[] @relation("BusinessClaimsMade")
@@ -419,4 +428,20 @@ model SavedItem {
   @@unique([userId, businessId])
   @@index([postId])
   @@index([businessId])
+}
+
+// Token de push (FCM) de un dispositivo. Un usuario puede tener varios
+// (celular + tablet, o reinstalo la app), por eso no es 1:1 con User. El
+// token en si es unico: si el mismo dispositivo se re-registra (token
+// puede rotar) o el usuario cambia de cuenta en el mismo celular, se
+// hace upsert por token, no se acumulan duplicados apuntando a
+// distintos usuarios.
+model PushToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
