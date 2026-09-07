@@ -3,12 +3,13 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { PixelIcon } from '../PixelIcon';
 import MapScreen from '../screens/MapScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import PublishScreen from '../screens/PublishScreen';
 import ExploreScreen from '../screens/ExploreScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 // 5 secciones principales, seccion 23 del brief: Mapa, Comunidad, Publicar,
 // Explorar, Perfil. "Publicar" se destaca como boton circular flotante en
@@ -20,7 +21,7 @@ function PublishTabButton({ onPress }: { onPress?: () => void }) {
   return (
     <TouchableOpacity style={styles.fabWrapper} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.fab}>
-        <Ionicons name="add" size={30} color={colors.onPrimary} />
+        <PixelIcon name="PLUS" size={26} color={colors.onPrimary} />
       </View>
     </TouchableOpacity>
   );
@@ -38,7 +39,7 @@ export default function TabNavigator() {
       screenOptions={({ navigation }) => ({
         headerTitleAlign: 'center',
         headerStyle: { backgroundColor: colors.surface },
-        headerTitleStyle: { color: colors.text, fontWeight: '700' as const },
+        headerTitleStyle: { color: colors.text, fontFamily: fonts.pixel, fontWeight: 'normal', fontSize: 14 },
         headerTintColor: colors.text,
         headerShadowVisible: false,
         headerRight: () => (
@@ -59,14 +60,14 @@ export default function TabNavigator() {
         name="Mapa"
         component={MapScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="map" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <PixelIcon name="PIN" size={size} color={color} />,
         }}
       />
       <Tab.Screen
         name="Comunidad"
         component={CommunityScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="newspaper" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <PixelIcon name="NEWSPAPER" size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -83,14 +84,14 @@ export default function TabNavigator() {
         name="Explorar"
         component={ExploreScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <PixelIcon name="COMPASS" size={size} color={color} />,
         }}
       />
       <Tab.Screen
         name="Perfil"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <PixelIcon name="PERSON" size={size} color={color} />,
         }}
       />
     </Tab.Navigator>

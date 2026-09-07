@@ -11,7 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BUSINESSES_PAGE_SIZE, fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness } from '../types';
-import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICONS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_PIXEL_ICON, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { PixelIcon } from '../PixelIcon';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -25,7 +26,7 @@ function BusinessCard({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={[styles.icon, { backgroundColor: BUSINESS_CATEGORY_COLORS[business.category] }]}>
-        <Ionicons name={BUSINESS_CATEGORY_ICONS[business.category]} size={22} color={colors.onPrimary} />
+        <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[business.category]} size={22} color={colors.onPrimary} />
       </View>
       <View style={styles.cardBody}>
         <View style={styles.cardHeader}>

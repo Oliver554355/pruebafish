@@ -1,8 +1,5 @@
-import type { ComponentProps } from 'react';
-import { Ionicons } from '@expo/vector-icons';
 import { AnimalSex, AnimalSpecies, BusinessCategory, PostCategory, SaleCondition } from './types';
-
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
+import { GlyphName } from './pixelIcons';
 
 // Colores por categoria (brief seccion 4.1: "los marcadores deben poder
 // diferenciarse visualmente segun su categoria"), afinados para el tema
@@ -21,17 +18,17 @@ export const CATEGORY_COLORS: Record<PostCategory, string> = {
   OTRO: '#64748B',
 };
 
-export const CATEGORY_ICONS: Record<PostCategory, IoniconName> = {
-  ACCIDENTE: 'car-sport',
-  INCIDENTE: 'alert-circle',
-  ANIMAL_PERDIDO: 'paw',
-  ANIMAL_ENCONTRADO: 'paw',
-  ADOPCION: 'heart',
-  RECOMENDACION: 'star',
-  EVENTO: 'calendar',
-  AVISO: 'megaphone',
-  VENTA: 'pricetag',
-  OTRO: 'ellipsis-horizontal',
+export const CATEGORY_PIXEL_ICON: Record<PostCategory, GlyphName> = {
+  ACCIDENTE: 'CAR',
+  INCIDENTE: 'EXCLAIM',
+  ANIMAL_PERDIDO: 'PAW',
+  ANIMAL_ENCONTRADO: 'PAW',
+  ADOPCION: 'HEART',
+  RECOMENDACION: 'STAR',
+  EVENTO: 'CALENDAR',
+  AVISO: 'MEGAPHONE',
+  VENTA: 'TAG',
+  OTRO: 'DOTS',
 };
 
 export const CATEGORY_LABELS: Record<PostCategory, string> = {
@@ -93,16 +90,16 @@ export const BUSINESS_CATEGORY_COLORS: Record<BusinessCategory, string> = {
   OTRO: '#64748B',
 };
 
-export const BUSINESS_CATEGORY_ICONS: Record<BusinessCategory, IoniconName> = {
-  RESTAURANTE: 'restaurant',
-  TIENDA: 'storefront',
-  HOSTAL: 'bed',
-  PARQUE: 'leaf',
-  TURISMO: 'camera',
-  FARMACIA: 'medkit',
-  SALUD: 'medical',
-  EDUCACION: 'school',
-  BANCO_CAJERO: 'cash',
-  PARADA: 'bus',
-  OTRO: 'ellipsis-horizontal',
+export const BUSINESS_CATEGORY_PIXEL_ICON: Record<BusinessCategory, GlyphName> = {
+  RESTAURANTE: 'FORK',
+  TIENDA: 'SHOP',
+  HOSTAL: 'BED',
+  PARQUE: 'TREE',
+  TURISMO: 'CAMERA',
+  FARMACIA: 'CROSS_SOLID',
+  SALUD: 'CROSS_HOLLOW',
+  EDUCACION: 'CAP',
+  BANCO_CAJERO: 'COIN',
+  PARADA: 'BUS',
+  OTRO: 'DOTS',
 };

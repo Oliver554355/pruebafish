@@ -28,6 +28,21 @@ export const colors = {
   overlay: 'rgba(0,0,0,0.55)',
 };
 
+// Fuente pixel-art (Press Start 2P) linkeada a mano como asset nativo de
+// Android, sin pasar por expo-font -- evita un `expo prebuild` (que rompe
+// usesCleartextTraffic/local.properties cada vez que corre). El .ttf vive
+// en dos lugares: mobile/assets/fonts/ (trackeado por git, fuente de
+// verdad) y android/app/src/main/assets/fonts/ (donde Android realmente
+// lo lee, pero esa carpeta esta en .gitignore y se borra en cada prebuild
+// -- hay que volver a copiarlo ahi despues de cada `expo prebuild`, igual
+// que usesCleartextTraffic/local.properties). fontWeight tiene que quedar
+// en 'normal' donde se use esta fuente: con cualquier otro peso, Android
+// busca un archivo "PressStart2P-Regular_bold.ttf" que no existe y cae en
+// silencio a la fuente del sistema.
+export const fonts = {
+  pixel: 'PressStart2P-Regular',
+};
+
 export const radius = {
   sm: 8,
   md: 12,

@@ -24,10 +24,11 @@ import {
   ANIMAL_SEX_LABELS,
   ANIMAL_SPECIES_LABELS,
   CATEGORY_COLORS,
-  CATEGORY_ICONS,
+  CATEGORY_PIXEL_ICON,
   CATEGORY_LABELS,
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
+import { PixelIcon } from '../PixelIcon';
 import { useAuth } from '../context/AuthContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -232,7 +233,7 @@ export default function PostDetailScreen({ route, navigation }: any) {
         ListHeaderComponent={
           <View>
             <View style={[styles.badge, { backgroundColor: CATEGORY_COLORS[post.category] }]}>
-              <Ionicons name={CATEGORY_ICONS[post.category]} size={13} color={colors.onPrimary} />
+              <PixelIcon name={CATEGORY_PIXEL_ICON[post.category]} size={13} color={colors.onPrimary} />
               <Text style={styles.badgeText}>{CATEGORY_LABELS[post.category]}</Text>
             </View>
             <Text style={styles.title}>{post.title}</Text>

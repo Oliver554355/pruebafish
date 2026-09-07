@@ -15,8 +15,10 @@ import UserProfileScreen from '../screens/UserProfileScreen';
 import FollowListScreen from '../screens/FollowListScreen';
 import SearchScreen from '../screens/SearchScreen';
 import { usePushNotifications } from '../usePushNotifications';
+import { fonts } from '../theme';
 
 const Stack = createNativeStackNavigator();
+const headerTitleStyle = { fontFamily: fonts.pixel, fontWeight: 'normal' as const, fontSize: 13 };
 
 export default function RootNavigator() {
   const { user } = useAuth();
@@ -32,7 +34,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, headerTitleStyle }}>
       <Stack.Screen name="Main" component={TabNavigator} />
       <Stack.Screen
         name="PostDetail"

@@ -8,8 +8,9 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PixelIcon } from '../PixelIcon';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, radius, spacing, typography } from '../theme';
 
 export default function RegisterScreen({ navigation }: any) {
   const { register } = useAuth();
@@ -36,7 +37,7 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.logoBadge}>
-        <Ionicons name="person-add" size={40} color={colors.onPrimary} />
+        <PixelIcon name="PERSON" size={40} color={colors.onPrimary} />
       </View>
       <Text style={styles.title}>Crear cuenta</Text>
       <Text style={styles.subtitle}>Unite a tu comunidad</Text>
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.lg,
   },
-  title: { ...typography.h1, textAlign: 'center' },
+  title: { ...typography.h1, fontFamily: fonts.pixel, fontWeight: 'normal', fontSize: 17, lineHeight: 26, textAlign: 'center' },
   subtitle: { ...typography.bodyMuted, textAlign: 'center', marginBottom: spacing.xxl, marginTop: spacing.xs },
   inputRow: {
     flexDirection: 'row',

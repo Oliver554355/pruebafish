@@ -12,7 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { FEED_PAGE_SIZE, fetchFeed } from '../api/posts';
 import { FeedPost, PostCategory } from '../types';
-import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORY_LABELS } from '../categoryStyle';
+import { CATEGORY_COLORS, CATEGORY_PIXEL_ICON, CATEGORY_LABELS } from '../categoryStyle';
+import { PixelIcon } from '../PixelIcon';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -40,7 +41,7 @@ function PostCard({ post, onPress }: { post: FeedPost; onPress: () => void }) {
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.cardHeader}>
         <View style={[styles.badge, { backgroundColor: CATEGORY_COLORS[post.category] }]}>
-          <Ionicons name={CATEGORY_ICONS[post.category]} size={12} color={colors.onPrimary} />
+          <PixelIcon name={CATEGORY_PIXEL_ICON[post.category]} size={12} color={colors.onPrimary} />
           <Text style={styles.badgeText}>{CATEGORY_LABELS[post.category]}</Text>
         </View>
         <Text style={styles.time}>{timeAgo(post.createdAt)}</Text>

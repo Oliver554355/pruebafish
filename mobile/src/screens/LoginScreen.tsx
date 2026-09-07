@@ -8,8 +8,9 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PixelIcon } from '../PixelIcon';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, radius, spacing, typography } from '../theme';
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -35,7 +36,7 @@ export default function LoginScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.logoBadge}>
-        <Ionicons name="location" size={40} color={colors.onPrimary} />
+        <PixelIcon name="PIN" size={40} color={colors.onPrimary} />
       </View>
       <Text style={styles.title}>Comunidad Chosica</Text>
       <Text style={styles.subtitle}>Tu comunidad, en un solo lugar</Text>
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.lg,
   },
-  title: { ...typography.h1, textAlign: 'center' },
+  title: { ...typography.h1, fontFamily: fonts.pixel, fontWeight: 'normal', fontSize: 15, lineHeight: 24, textAlign: 'center' },
   subtitle: { ...typography.bodyMuted, textAlign: 'center', marginBottom: spacing.xxl, marginTop: spacing.xs },
   inputRow: {
     flexDirection: 'row',

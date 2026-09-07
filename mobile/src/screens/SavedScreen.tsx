@@ -8,17 +8,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { fetchSaved } from '../api/saved';
 import { SavedItem } from '../types';
 import {
   BUSINESS_CATEGORY_COLORS,
-  BUSINESS_CATEGORY_ICONS,
+  BUSINESS_CATEGORY_PIXEL_ICON,
   BUSINESS_CATEGORY_LABELS,
   CATEGORY_COLORS,
-  CATEGORY_ICONS,
+  CATEGORY_PIXEL_ICON,
   CATEGORY_LABELS,
 } from '../categoryStyle';
+import { PixelIcon } from '../PixelIcon';
 import { card, colors, radius, spacing, typography } from '../theme';
 
 type Tab = 'ALL' | 'POSTS' | 'BUSINESSES';
@@ -121,7 +121,7 @@ export default function SavedScreen({ navigation }: any) {
               activeOpacity={0.85}
             >
               <View style={[styles.icon, { backgroundColor: CATEGORY_COLORS[item.post.category] }]}>
-                <Ionicons name={CATEGORY_ICONS[item.post.category]} size={20} color={colors.onPrimary} />
+                <PixelIcon name={CATEGORY_PIXEL_ICON[item.post.category]} size={20} color={colors.onPrimary} />
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.category}>{CATEGORY_LABELS[item.post.category]}</Text>
@@ -135,7 +135,7 @@ export default function SavedScreen({ navigation }: any) {
               activeOpacity={0.85}
             >
               <View style={[styles.icon, { backgroundColor: BUSINESS_CATEGORY_COLORS[item.business.category] }]}>
-                <Ionicons name={BUSINESS_CATEGORY_ICONS[item.business.category]} size={20} color={colors.onPrimary} />
+                <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[item.business.category]} size={20} color={colors.onPrimary} />
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.category}>{BUSINESS_CATEGORY_LABELS[item.business.category]}</Text>

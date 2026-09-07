@@ -21,7 +21,8 @@ import { fetchReactionSummary, toggleReaction } from '../api/reactions';
 import { fetchProducts } from '../api/products';
 import { toggleSaved } from '../api/saved';
 import { BusinessDetail, Comment, Product } from '../types';
-import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICONS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_PIXEL_ICON, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { PixelIcon } from '../PixelIcon';
 import { useAuth } from '../context/AuthContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -246,7 +247,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
           <View>
             <View style={styles.headerRow}>
               <View style={[styles.categoryIcon, { backgroundColor: BUSINESS_CATEGORY_COLORS[business.category] }]}>
-                <Ionicons name={BUSINESS_CATEGORY_ICONS[business.category]} size={18} color={colors.onPrimary} />
+                <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[business.category]} size={18} color={colors.onPrimary} />
               </View>
               <Text style={styles.categoryTag}>{BUSINESS_CATEGORY_LABELS[business.category]}</Text>
               {business.verified && (

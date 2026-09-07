@@ -9,10 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { PixelIcon } from '../PixelIcon';
 import { createBusiness } from '../api/businesses';
 import { BusinessCategory } from '../types';
-import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICONS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_PIXEL_ICON, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -73,7 +73,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
               onPress={() => setCategory(cat)}
               style={[styles.chip, active && { backgroundColor: BUSINESS_CATEGORY_COLORS[cat], borderColor: BUSINESS_CATEGORY_COLORS[cat] }]}
             >
-              <Ionicons name={BUSINESS_CATEGORY_ICONS[cat]} size={13} color={active ? colors.onPrimary : colors.textMuted} />
+              <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[cat]} size={13} color={active ? colors.onPrimary : colors.textMuted} />
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
                 {BUSINESS_CATEGORY_LABELS[cat]}
               </Text>

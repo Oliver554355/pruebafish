@@ -21,10 +21,11 @@ import {
   ANIMAL_SEX_LABELS,
   ANIMAL_SPECIES_LABELS,
   CATEGORY_COLORS,
-  CATEGORY_ICONS,
+  CATEGORY_PIXEL_ICON,
   CATEGORY_LABELS,
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
+import { PixelIcon } from '../PixelIcon';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -171,7 +172,7 @@ export default function PublishScreen({ navigation }: any) {
               activeOpacity={0.85}
             >
               <View style={[styles.gridIcon, { backgroundColor: CATEGORY_COLORS[cat] }]}>
-                <Ionicons name={CATEGORY_ICONS[cat]} size={24} color={colors.onPrimary} />
+                <PixelIcon name={CATEGORY_PIXEL_ICON[cat]} size={24} color={colors.onPrimary} />
               </View>
               <Text style={styles.gridLabel}>{CATEGORY_LABELS[cat]}</Text>
             </TouchableOpacity>
@@ -185,7 +186,7 @@ export default function PublishScreen({ navigation }: any) {
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity style={styles.selectedCategoryRow} onPress={() => setCategory(null)}>
         <View style={[styles.selectedIcon, { backgroundColor: CATEGORY_COLORS[category] }]}>
-          <Ionicons name={CATEGORY_ICONS[category]} size={20} color={colors.onPrimary} />
+          <PixelIcon name={CATEGORY_PIXEL_ICON[category]} size={20} color={colors.onPrimary} />
         </View>
         <Text style={styles.selectedLabel}>{CATEGORY_LABELS[category]}</Text>
         <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
