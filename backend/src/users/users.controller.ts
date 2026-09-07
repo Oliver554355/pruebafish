@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Request, UseGuards } from '@
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateFollowedCategoriesDto } from './dto/update-followed-categories.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('users')
 export class UsersController {
@@ -14,6 +15,15 @@ export class UsersController {
     if (!user) return null;
     const { passwordHash: _passwordHash, ...safeUser } = user;
     return safeUser;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  updateProfile(
+    @Request() req: { user: { userId: string } },
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.usersService.updateProfile(req.user.userId, dto);
   }
 
   // Preferencia para el feed (GET /posts/feed): boost a las categorias que

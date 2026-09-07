@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -33,6 +34,23 @@ export class UsersService {
 
   create(data: { email: string; username: string; passwordHash: string }) {
     return this.prisma.user.create({ data });
+  }
+
+  // Perfil "privado" editable por el propio usuario. Por ahora solo el
+  // username -- el email queda fuera porque es la credencial de login
+  // (cambiarlo implicaria reverificarlo, fuera de alcance de este MVP).
+  async updateProfile(id: string, data: { username?: string }) {
+    if (data.username) {
+      const existing = await this.prisma.user.findUnique({
+        where: { username: data.username },
+      });
+      if (existing && existing.id !== id) {
+        throw new ConflictException('Ese nombre de usuario ya está en uso');
+      }
+    }
+    const user = await this.prisma.user.update({ where: { id }, data });
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return safeUser;
   }
 
   updateFollowedCategories(id: string, categories: PostCategory[]) {
