@@ -15,6 +15,7 @@ import {
 import { fetchPost, markPostSold } from '../api/posts';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
+import { toggleSaved } from '../api/saved';
 import { Comment, PostDetail } from '../types';
 import {
   ANIMAL_SEX_LABELS,
@@ -38,15 +39,19 @@ function CommentRow({
   comment,
   isMine,
   onDelete,
+  onPressAuthor,
 }: {
   comment: Comment;
   isMine: boolean;
   onDelete: (id: string) => void;
+  onPressAuthor: (userId: string) => void;
 }) {
   return (
     <View style={styles.commentRow}>
       <View style={styles.commentHeader}>
-        <Text style={styles.commentAuthor}>{comment.author.username}</Text>
+        <TouchableOpacity onPress={() => onPressAuthor(comment.authorId)}>
+          <Text style={styles.commentAuthor}>{comment.author.username}</Text>
+        </TouchableOpacity>
         <Text style={styles.commentTime}>{formatDate(comment.createdAt)}</Text>
       </View>
       <Text style={styles.commentContent}>{comment.content}</Text>
@@ -59,7 +64,7 @@ function CommentRow({
   );
 }
 
-export default function PostDetailScreen({ route }: any) {
+export default function PostDetailScreen({ route, navigation }: any) {
   const { postId } = route.params as { postId: string };
   const { user } = useAuth();
 
@@ -67,6 +72,7 @@ export default function PostDetailScreen({ route }: any) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
@@ -121,6 +127,17 @@ export default function PostDetailScreen({ route }: any) {
       Alert.alert('No se pudo comentar', 'Intentá de nuevo en un momento.');
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleToggleSave() {
+    const wasSaved = saved;
+    setSaved(!wasSaved);
+    try {
+      const { saved: nowSaved } = await toggleSaved({ postId });
+      setSaved(nowSaved);
+    } catch (err) {
+      setSaved(wasSaved);
     }
   }
 
@@ -179,6 +196,7 @@ export default function PostDetailScreen({ route }: any) {
             comment={item}
             isMine={item.authorId === user?.id}
             onDelete={handleDeleteComment}
+            onPressAuthor={(userId) => navigation.navigate('UserProfile', { userId })}
           />
         )}
         ListEmptyComponent={
@@ -193,6 +211,11 @@ export default function PostDetailScreen({ route }: any) {
             </View>
             <Text style={styles.title}>{post.title}</Text>
             {post.description && <Text style={styles.description}>{post.description}</Text>}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('UserProfile', { userId: post.author.id })}
+            >
+              <Text style={styles.author}>Publicado por {post.author.username}</Text>
+            </TouchableOpacity>
             <Text style={styles.date}>{formatDate(post.createdAt)}</Text>
 
             {post.photos.length > 0 && (
@@ -281,11 +304,16 @@ export default function PostDetailScreen({ route }: any) {
               </View>
             )}
 
-            <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
-              <Text style={styles.likeText}>
-                {liked ? '❤️' : '🤍'} {likeCount}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
+                <Text style={styles.likeText}>
+                  {liked ? '❤️' : '🤍'} {likeCount}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleToggleSave}>
+                <Text style={styles.saveText}>{saved ? '🔖 Guardado' : '🏷️ Guardar'}</Text>
+              </TouchableOpacity>
+            </View>
 
             <Text style={styles.commentsTitle}>Comentarios</Text>
           </View>
@@ -329,7 +357,8 @@ const styles = StyleSheet.create({
   badgeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 6 },
   description: { color: '#374151', fontSize: 15, marginBottom: 8 },
-  date: { color: '#6b7280', fontSize: 12, marginBottom: 14 },
+  author: { color: '#2563eb', fontSize: 13, fontWeight: '600' },
+  date: { color: '#6b7280', fontSize: 12, marginTop: 2, marginBottom: 14 },
   photoRow: { marginBottom: 14 },
   photo: { width: 150, height: 110, borderRadius: 10, marginRight: 8 },
   detailsBox: {
@@ -350,15 +379,23 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   soldButtonText: { color: '#fff', fontWeight: '600' },
+  actionsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   likeButton: {
     alignSelf: 'flex-start',
     backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    marginBottom: 20,
   },
   likeText: { fontSize: 15, fontWeight: '600' },
+  saveButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  saveText: { fontSize: 15, fontWeight: '600' },
   commentsTitle: { fontWeight: '700', fontSize: 15, marginBottom: 8 },
   commentRow: {
     borderTopWidth: 1,

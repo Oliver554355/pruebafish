@@ -99,12 +99,31 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={styles.stats}>
           <Stat label="Reputación" value={profile.reputation.score.toFixed(1)} />
           <Stat label="Publicaciones" value={profile.postsCount} />
-          <Stat label="Seguidores" value={profile.followersCount} />
-          <Stat label="Siguiendo" value={profile.followingCount} />
+          <TouchableOpacity
+            style={styles.stat}
+            onPress={() => navigation.navigate('FollowList', { userId: user.id, mode: 'followers' })}
+          >
+            <Text style={styles.statValue}>{profile.followersCount}</Text>
+            <Text style={styles.statLabel}>Seguidores</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.stat}
+            onPress={() => navigation.navigate('FollowList', { userId: user.id, mode: 'following' })}
+          >
+            <Text style={styles.statValue}>{profile.followingCount}</Text>
+            <Text style={styles.statLabel}>Siguiendo</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <ActivityIndicator style={styles.stats} />
       )}
+
+      <TouchableOpacity
+        style={styles.savedButton}
+        onPress={() => navigation.navigate('Saved')}
+      >
+        <Text style={styles.savedButtonText}>Guardados</Text>
+      </TouchableOpacity>
 
       {user.isModerator && (
         <TouchableOpacity
@@ -166,6 +185,15 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontWeight: '600' },
   cancelButton: { backgroundColor: '#f3f4f6' },
   cancelButtonText: { color: '#374151', fontWeight: '600' },
+  savedButton: {
+    borderWidth: 1,
+    borderColor: '#2563eb',
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  savedButtonText: { color: '#2563eb', fontWeight: '600' },
   moderationButton: {
     borderWidth: 1,
     borderColor: '#111827',

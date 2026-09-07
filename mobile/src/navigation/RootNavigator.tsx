@@ -10,6 +10,9 @@ import CreateBusinessScreen from '../screens/CreateBusinessScreen';
 import BusinessPanelScreen from '../screens/BusinessPanelScreen';
 import ClaimBusinessScreen from '../screens/ClaimBusinessScreen';
 import ModerationScreen from '../screens/ModerationScreen';
+import SavedScreen from '../screens/SavedScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
+import FollowListScreen from '../screens/FollowListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -57,6 +60,24 @@ export default function RootNavigator() {
         name="Moderation"
         component={ModerationScreen}
         options={{ headerShown: true, title: 'Moderación' }}
+      />
+      <Stack.Screen
+        name="Saved"
+        component={SavedScreen}
+        options={{ headerShown: true, title: 'Guardados' }}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfileScreen}
+        options={{ headerShown: true, title: 'Perfil' }}
+      />
+      <Stack.Screen
+        name="FollowList"
+        component={FollowListScreen}
+        options={({ route }: any) => ({
+          headerShown: true,
+          title: route.params?.mode === 'followers' ? 'Seguidores' : 'Siguiendo',
+        })}
       />
     </Stack.Navigator>
   );

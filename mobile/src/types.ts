@@ -106,6 +106,28 @@ export interface SaleDetails {
   sold: boolean;
 }
 
+export interface FollowEntry {
+  id: string;
+  createdAt: string;
+  follower?: { id: string; username: string };
+  following?: { id: string; username: string };
+}
+
+export interface SavedItem {
+  id: string;
+  postId: string | null;
+  businessId: string | null;
+  createdAt: string;
+  post: { id: string; category: PostCategory; title: string; description: string | null } | null;
+  business: {
+    id: string;
+    category: BusinessCategory;
+    name: string;
+    description: string | null;
+    verified: boolean;
+  } | null;
+}
+
 export interface PostDetail extends NearbyPost {
   author: { id: string; username: string };
   photos: Photo[];

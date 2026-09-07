@@ -16,6 +16,7 @@ import { fetchBusiness } from '../api/businesses';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
 import { fetchProducts } from '../api/products';
+import { toggleSaved } from '../api/saved';
 import { BusinessDetail, Comment, Product } from '../types';
 import { BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useAuth } from '../context/AuthContext';
@@ -49,15 +50,19 @@ function ReviewRow({
   comment,
   isMine,
   onDelete,
+  onPressAuthor,
 }: {
   comment: Comment;
   isMine: boolean;
   onDelete: (id: string) => void;
+  onPressAuthor: (userId: string) => void;
 }) {
   return (
     <View style={styles.commentRow}>
       <View style={styles.commentHeader}>
-        <Text style={styles.commentAuthor}>{comment.author.username}</Text>
+        <TouchableOpacity onPress={() => onPressAuthor(comment.authorId)}>
+          <Text style={styles.commentAuthor}>{comment.author.username}</Text>
+        </TouchableOpacity>
         <Text style={styles.commentTime}>{formatDate(comment.createdAt)}</Text>
       </View>
       {comment.rating != null && <Stars value={comment.rating} />}
@@ -80,6 +85,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviewText, setReviewText] = useState('');
   const [myRating, setMyRating] = useState(5);
@@ -119,6 +125,17 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
     } catch (err) {
       setLiked(wasLiked);
       setLikeCount((c) => c + (wasLiked ? 1 : -1));
+    }
+  }
+
+  async function handleToggleSave() {
+    const wasSaved = saved;
+    setSaved(!wasSaved);
+    try {
+      const { saved: nowSaved } = await toggleSaved({ businessId });
+      setSaved(nowSaved);
+    } catch (err) {
+      setSaved(wasSaved);
     }
   }
 
@@ -187,6 +204,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             comment={item}
             isMine={item.authorId === user?.id}
             onDelete={handleDeleteComment}
+            onPressAuthor={(userId) => navigation.navigate('UserProfile', { userId })}
           />
         )}
         ListEmptyComponent={
@@ -231,9 +249,14 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               )}
             </View>
 
-            <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
-              <Text style={styles.likeText}>{liked ? '❤️' : '🤍'} {likeCount}</Text>
-            </TouchableOpacity>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
+                <Text style={styles.likeText}>{liked ? '❤️' : '🤍'} {likeCount}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleToggleSave}>
+                <Text style={styles.saveText}>{saved ? '🔖 Guardado' : '🏷️ Guardar'}</Text>
+              </TouchableOpacity>
+            </View>
 
             {user && business.ownerId === user.id ? (
               <TouchableOpacity
@@ -361,16 +384,23 @@ const styles = StyleSheet.create({
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   stars: { color: '#f59e0b', fontSize: 16 },
   ratingText: { color: '#6b7280', fontSize: 13 },
+  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 20 },
   likeButton: {
     alignSelf: 'flex-start',
     backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    marginTop: 14,
-    marginBottom: 20,
   },
   likeText: { fontSize: 15, fontWeight: '600' },
+  saveButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  saveText: { fontSize: 15, fontWeight: '600' },
   commentsTitle: { fontWeight: '700', fontSize: 15, marginBottom: 8 },
   commentRow: { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingVertical: 10 },
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between' },
