@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { fetchNearbyBusinesses } from '../api/businesses';
+import { BUSINESSES_PAGE_SIZE, fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness } from '../types';
 import { BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
@@ -37,16 +37,38 @@ export default function ExploreScreen({ navigation }: any) {
   const { coords, loading: loadingLocation } = useCurrentLocation();
   const [businesses, setBusinesses] = useState<NearbyBusiness[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const load = useCallback(async () => {
     if (!coords) return;
     setRefreshing(true);
     try {
-      setBusinesses(await fetchNearbyBusinesses(coords.lat, coords.lng, 5000));
+      const page = await fetchNearbyBusinesses(coords.lat, coords.lng, 5000, undefined, 0);
+      setBusinesses(page);
+      setHasMore(page.length === BUSINESSES_PAGE_SIZE);
     } finally {
       setRefreshing(false);
     }
   }, [coords]);
+
+  const loadMore = useCallback(async () => {
+    if (!coords || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchNearbyBusinesses(
+        coords.lat,
+        coords.lng,
+        5000,
+        undefined,
+        businesses.length,
+      );
+      setBusinesses((prev) => [...prev, ...page]);
+      setHasMore(page.length === BUSINESSES_PAGE_SIZE);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [coords, loadingMore, hasMore, businesses.length]);
 
   useEffect(() => {
     load();
@@ -82,6 +104,9 @@ export default function ExploreScreen({ navigation }: any) {
             </Text>
           </View>
         }
+        onEndReachedThreshold={0.4}
+        onEndReached={loadMore}
+        ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} /> : null}
       />
       <TouchableOpacity
         style={styles.fab}
@@ -129,4 +154,5 @@ const styles = StyleSheet.create({
   address: { color: '#374151', marginTop: 6 },
   meta: { color: '#6b7280', fontSize: 12, marginTop: 8 },
   emptyText: { color: '#6b7280' },
+  footer: { marginVertical: 16 },
 });

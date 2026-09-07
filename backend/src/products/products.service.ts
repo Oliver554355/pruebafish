@@ -1,11 +1,15 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../photos/storage.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   private async getEditableBusiness(businessId: string, userId: string) {
     const business = await this.prisma.business.findUnique({
@@ -35,12 +39,18 @@ export class ProductsService {
     });
   }
 
-  findMany(businessId: string) {
-    return this.prisma.product.findMany({
+  async findMany(businessId: string) {
+    const products = await this.prisma.product.findMany({
       where: { businessId },
       orderBy: { createdAt: 'asc' },
       include: { photos: true },
     });
+    return Promise.all(
+      products.map(async (p) => ({
+        ...p,
+        photos: await this.storage.signPhotos(p.photos),
+      })),
+    );
   }
 
   async findOne(id: string) {
@@ -49,7 +59,7 @@ export class ProductsService {
       include: { photos: true },
     });
     if (!product) throw new NotFoundException('Producto no encontrado');
-    return product;
+    return { ...product, photos: await this.storage.signPhotos(product.photos) };
   }
 
   async update(id: string, userId: string, dto: UpdateProductDto) {

@@ -86,6 +86,8 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   const [business, setBusiness] = useState<BusinessDetail | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [nextCommentsCursor, setNextCommentsCursor] = useState<string | null>(null);
+  const [loadingMoreComments, setLoadingMoreComments] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -97,7 +99,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [businessData, productsData, commentsData, summary] = await Promise.all([
+      const [businessData, productsData, commentsPage, summary] = await Promise.all([
         fetchBusiness(businessId),
         fetchProducts(businessId),
         fetchComments({ businessId }),
@@ -105,7 +107,8 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
       ]);
       setBusiness(businessData);
       setProducts(productsData);
-      setComments(commentsData);
+      setComments(commentsPage.items);
+      setNextCommentsCursor(commentsPage.nextCursor);
       setLikeCount(summary.find((s) => s.type === 'LIKE')?.count ?? 0);
     } catch (err) {
       Alert.alert('Error', 'No se pudo cargar el point.');
@@ -113,6 +116,18 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
       setLoading(false);
     }
   }, [businessId]);
+
+  async function loadMoreComments() {
+    if (!nextCommentsCursor || loadingMoreComments) return;
+    setLoadingMoreComments(true);
+    try {
+      const page = await fetchComments({ businessId, cursor: nextCommentsCursor });
+      setComments((prev) => [...prev, ...page.items]);
+      setNextCommentsCursor(page.nextCursor);
+    } finally {
+      setLoadingMoreComments(false);
+    }
+  }
 
   useEffect(() => {
     load();
@@ -319,6 +334,11 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             <Text style={styles.commentsTitle}>Reseñas</Text>
           </View>
         }
+        onEndReachedThreshold={0.4}
+        onEndReached={loadMoreComments}
+        ListFooterComponent={
+          loadingMoreComments ? <ActivityIndicator style={styles.footer} /> : null
+        }
       />
       <View style={[styles.inputBar, { paddingBottom: 10 + insets.bottom }]}>
         <View style={styles.inputBarInner}>
@@ -429,6 +449,7 @@ const styles = StyleSheet.create({
   commentContent: { marginTop: 4, color: '#111827' },
   deleteLink: { color: '#dc2626', fontSize: 12, marginTop: 6 },
   emptyText: { color: '#6b7280', paddingVertical: 16 },
+  footer: { marginVertical: 16 },
   inputBar: {
     padding: 10,
     borderTopWidth: 1,

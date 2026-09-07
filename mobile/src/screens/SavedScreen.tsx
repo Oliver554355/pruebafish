@@ -14,17 +14,33 @@ import { CATEGORY_COLORS, CATEGORY_LABELS, BUSINESS_CATEGORY_LABELS } from '../c
 
 export default function SavedScreen({ navigation }: any) {
   const [items, setItems] = useState<SavedItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      setItems(await fetchSaved());
+      const page = await fetchSaved();
+      setItems(page.items);
+      setNextCursor(page.nextCursor);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchSaved(nextCursor);
+      setItems((prev) => [...prev, ...page.items]);
+      setNextCursor(page.nextCursor);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore]);
 
   useEffect(() => {
     load();
@@ -82,6 +98,9 @@ export default function SavedScreen({ navigation }: any) {
           </TouchableOpacity>
         ) : null
       }
+      onEndReachedThreshold={0.4}
+      onEndReached={loadMore}
+      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} /> : null}
     />
   );
 }
@@ -115,4 +134,5 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   title: { fontSize: 16, fontWeight: '700' },
+  footer: { marginVertical: 16 },
 });

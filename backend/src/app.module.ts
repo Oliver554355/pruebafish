@@ -14,6 +14,7 @@ import { BusinessClaimsModule } from './business-claims/business-claims.module';
 import { SavedModule } from './saved/saved.module';
 import { ProductsModule } from './products/products.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     SavedModule,
     ProductsModule,
     NotificationsModule,
+    SearchModule,
   ],
 })
 export class AppModule {}

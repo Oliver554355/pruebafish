@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { paginateByCursor } from '../common/paginate';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsDto } from './dto/list-comments.dto';
 
@@ -44,21 +45,25 @@ export class CommentsService {
     return comment;
   }
 
-  findMany(query: ListCommentsDto) {
+  async findMany(query: ListCommentsDto) {
     if (!!query.postId === !!query.businessId) {
       throw new BadRequestException(
         'Debe indicar exactamente uno de postId o businessId',
       );
     }
-    return this.prisma.comment.findMany({
+    const limit = query.limit ?? 20;
+    const rows = await this.prisma.comment.findMany({
       where: {
         postId: query.postId,
         businessId: query.businessId,
         hidden: false,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: { author: { select: { id: true, username: true } } },
+      take: limit + 1,
+      ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),
     });
+    return paginateByCursor(rows, limit);
   }
 
   async remove(id: string, userId: string) {

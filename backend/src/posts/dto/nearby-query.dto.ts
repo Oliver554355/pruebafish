@@ -31,4 +31,10 @@ export class NearbyQueryDto {
   @IsOptional()
   @IsEnum(PostCategory)
   category?: PostCategory;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number = 0;
 }

@@ -1,11 +1,12 @@
 import { api } from './client';
-import { Comment } from '../types';
+import { Comment, Page } from '../types';
 
 export async function fetchComments(params: {
   postId?: string;
   businessId?: string;
-}): Promise<Comment[]> {
-  const { data } = await api.get<Comment[]>('/comments', { params });
+  cursor?: string;
+}): Promise<Page<Comment>> {
+  const { data } = await api.get<Page<Comment>>('/comments', { params });
   return data;
 }
 

@@ -1,14 +1,17 @@
 import { api } from './client';
 import { BusinessCategory, BusinessDetail, NearbyBusiness } from '../types';
 
+export const BUSINESSES_PAGE_SIZE = 20;
+
 export async function fetchNearbyBusinesses(
   lat: number,
   lng: number,
   radius = 3000,
   category?: BusinessCategory,
+  offset = 0,
 ): Promise<NearbyBusiness[]> {
   const { data } = await api.get<NearbyBusiness[]>('/businesses/nearby', {
-    params: { lat, lng, radius, category },
+    params: { lat, lng, radius, category, offset, limit: BUSINESSES_PAGE_SIZE },
   });
   return data;
 }

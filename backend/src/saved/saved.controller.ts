@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SavedService } from './saved.service';
 import { CreateSavedItemDto } from './dto/create-saved-item.dto';
+import { ListSavedDto } from './dto/list-saved.dto';
 
 @Controller('saved')
 export class SavedController {
@@ -18,7 +19,10 @@ export class SavedController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findMany(@Request() req: { user: { userId: string } }) {
-    return this.savedService.findMany(req.user.userId);
+  findMany(
+    @Request() req: { user: { userId: string } },
+    @Query() query: ListSavedDto,
+  ) {
+    return this.savedService.findMany(req.user.userId, query);
   }
 }

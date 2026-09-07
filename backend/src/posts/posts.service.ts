@@ -7,6 +7,7 @@ import {
 import { Prisma, PostCategory } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { StorageService } from '../photos/storage.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { NearbyQueryDto } from './dto/nearby-query.dto';
 import { FeedQueryDto } from './dto/feed-query.dto';
@@ -70,6 +71,7 @@ export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly storage: StorageService,
   ) {}
 
   async create(authorId: string, dto: CreatePostDto) {
@@ -173,7 +175,7 @@ export class PostsService {
       },
     });
     if (!post) throw new NotFoundException('Post no encontrado');
-    return post;
+    return { ...post, photos: await this.storage.signPhotos(post.photos) };
   }
 
   // Solo el autor puede marcar su propia venta como concretada.
@@ -200,7 +202,7 @@ export class PostsService {
   // Descarta posts vencidos (expiresAt en el pasado) ademas de los ocultos.
   // Pensado para pines de mapa: orden simple por distancia, sin ranking.
   findNearby(query: NearbyQueryDto) {
-    const { lat, lng, radius = 3000, limit = 50, category } = query;
+    const { lat, lng, radius = 3000, limit = 50, offset = 0, category } = query;
     return this.prisma.$queryRaw<NearbyPostRow[]>(Prisma.sql`
       SELECT
         id, category, title, description, lat, lng,
@@ -216,7 +218,8 @@ export class PostsService {
       AND ("expiresAt" IS NULL OR "expiresAt" > now())
       ${category ? Prisma.sql`AND category = ${category}::"PostCategory"` : Prisma.empty}
       ORDER BY distance ASC
-      LIMIT ${limit};
+      LIMIT ${limit}
+      OFFSET ${offset};
     `);
   }
 
@@ -232,7 +235,7 @@ export class PostsService {
   // Pesos ajustables aca mismo; no hay A/B testing ni nada mas sofisticado
   // todavia.
   async feed(query: FeedQueryDto, userId?: string) {
-    const { lat, lng, radius = 3000, limit = 30, category } = query;
+    const { lat, lng, radius = 3000, limit = 30, offset = 0, category } = query;
 
     let followedCategories: PostCategory[] = [];
     if (userId) {
@@ -281,7 +284,8 @@ export class PostsService {
       AND (p."expiresAt" IS NULL OR p."expiresAt" > now())
       ${category ? Prisma.sql`AND p.category = ${category}::"PostCategory"` : Prisma.empty}
       ORDER BY score DESC
-      LIMIT ${limit};
+      LIMIT ${limit}
+      OFFSET ${offset};
     `);
   }
 }

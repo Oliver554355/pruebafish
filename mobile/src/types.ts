@@ -189,6 +189,29 @@ export interface BusinessDetail {
   rating: { average: number | null; count: number };
 }
 
+export interface SearchResults {
+  posts: {
+    id: string;
+    category: PostCategory;
+    title: string;
+    description: string | null;
+    createdAt: string;
+  }[];
+  businesses: {
+    id: string;
+    category: BusinessCategory;
+    name: string;
+    address: string | null;
+    verified: boolean;
+  }[];
+  users: { id: string; username: string }[];
+}
+
+export interface Page<T> {
+  items: T[];
+  nextCursor: string | null;
+}
+
 export interface NearbyBusiness {
   id: string;
   category: BusinessCategory;

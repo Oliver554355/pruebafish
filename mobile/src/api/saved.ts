@@ -1,5 +1,5 @@
 import { api } from './client';
-import { SavedItem } from '../types';
+import { Page, SavedItem } from '../types';
 
 export async function toggleSaved(input: {
   postId?: string;
@@ -9,7 +9,7 @@ export async function toggleSaved(input: {
   return data;
 }
 
-export async function fetchSaved(): Promise<SavedItem[]> {
-  const { data } = await api.get<SavedItem[]>('/saved');
+export async function fetchSaved(cursor?: string): Promise<Page<SavedItem>> {
+  const { data } = await api.get<Page<SavedItem>>('/saved', { params: { cursor } });
   return data;
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native';
 import MapScreen from '../screens/MapScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import PublishScreen from '../screens/PublishScreen';
@@ -18,7 +18,19 @@ function TabIcon({ emoji }: { emoji: string }) {
 
 export default function TabNavigator() {
   return (
-    <Tab.Navigator screenOptions={{ headerTitleAlign: 'center' }}>
+    <Tab.Navigator
+      screenOptions={({ navigation }) => ({
+        headerTitleAlign: 'center',
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Search')}
+            style={{ marginRight: 16 }}
+          >
+            <Text style={{ fontSize: 20 }}>🔍</Text>
+          </TouchableOpacity>
+        ),
+      })}
+    >
       <Tab.Screen
         name="Mapa"
         component={MapScreen}

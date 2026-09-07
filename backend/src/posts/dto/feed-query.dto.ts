@@ -28,4 +28,14 @@ export class FeedQueryDto {
   @IsOptional()
   @IsEnum(PostCategory)
   category?: PostCategory;
+
+  // Paginacion simple por desplazamiento: el feed ya viene ordenado por
+  // "score" (no por un campo monotono como createdAt), asi que un cursor
+  // real no aplica limpio aca -- offset alcanza para "cargar mas" en el
+  // scroll sin tener que traer todo de una.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number = 0;
 }

@@ -13,6 +13,7 @@ import ModerationScreen from '../screens/ModerationScreen';
 import SavedScreen from '../screens/SavedScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import FollowListScreen from '../screens/FollowListScreen';
+import SearchScreen from '../screens/SearchScreen';
 import { usePushNotifications } from '../usePushNotifications';
 
 const Stack = createNativeStackNavigator();
@@ -80,6 +81,11 @@ export default function RootNavigator() {
           headerShown: true,
           title: route.params?.mode === 'followers' ? 'Seguidores' : 'Siguiendo',
         })}
+      />
+      <Stack.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{ headerShown: true, title: 'Buscar' }}
       />
     </Stack.Navigator>
   );

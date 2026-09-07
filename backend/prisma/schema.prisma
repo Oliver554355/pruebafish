@@ -354,12 +354,14 @@ model Report {
 
 // Foto generica: exactamente uno de postId/businessId/productId (validado
 // en el servicio, mismo patron que Comment/Reaction/Report). El archivo en
-// si NO vive en Postgres — "url" apunta a un bucket S3-compatible (AWS real
-// o self-hosted como MinIO, ver StorageService); aca solo se guarda el
-// metadato. Ver ROADMAP.md para la config de storage.
+// si NO vive en Postgres — "key" es la ruta dentro del bucket S3-compatible
+// (AWS real o self-hosted como MinIO, ver StorageService), que ahora es
+// privado: la API nunca expone la key directo, siempre la cambia por una
+// URL firmada con expiracion (ver StorageService.getSignedUrl) antes de
+// mandarla al cliente. Ver ROADMAP.md para la config de storage.
 model Photo {
   id           String    @id @default(uuid())
-  url          String
+  key          String
   postId       String?
   post         Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
   businessId   String?

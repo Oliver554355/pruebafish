@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { fetchFeed } from '../api/posts';
+import { FEED_PAGE_SIZE, fetchFeed } from '../api/posts';
 import { FeedPost } from '../types';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
@@ -52,16 +52,32 @@ export default function CommunityScreen({ navigation }: any) {
   const { coords, loading: loadingLocation } = useCurrentLocation();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const load = useCallback(async () => {
     if (!coords) return;
     setRefreshing(true);
     try {
-      setPosts(await fetchFeed(coords.lat, coords.lng, 5000));
+      const page = await fetchFeed(coords.lat, coords.lng, 5000, 0);
+      setPosts(page);
+      setHasMore(page.length === FEED_PAGE_SIZE);
     } finally {
       setRefreshing(false);
     }
   }, [coords]);
+
+  const loadMore = useCallback(async () => {
+    if (!coords || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchFeed(coords.lat, coords.lng, 5000, posts.length);
+      setPosts((prev) => [...prev, ...page]);
+      setHasMore(page.length === FEED_PAGE_SIZE);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [coords, loadingMore, hasMore, posts.length]);
 
   useEffect(() => {
     load();
@@ -96,6 +112,9 @@ export default function CommunityScreen({ navigation }: any) {
           </Text>
         </View>
       }
+      onEndReachedThreshold={0.4}
+      onEndReached={loadMore}
+      ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} /> : null}
     />
   );
 }
@@ -124,4 +143,5 @@ const styles = StyleSheet.create({
   description: { color: '#374151', marginBottom: 8 },
   meta: { color: '#6b7280', fontSize: 12 },
   emptyText: { color: '#6b7280' },
+  footer: { marginVertical: 16 },
 });

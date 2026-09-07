@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { paginateByCursor } from '../common/paginate';
 import { CreateSavedItemDto } from './dto/create-saved-item.dto';
+import { ListSavedDto } from './dto/list-saved.dto';
 
 @Injectable()
 export class SavedService {
@@ -39,11 +41,15 @@ export class SavedService {
     return { saved: true };
   }
 
-  findMany(userId: string) {
-    return this.prisma.savedItem.findMany({
+  async findMany(userId: string, query: ListSavedDto) {
+    const limit = query.limit ?? 20;
+    const rows = await this.prisma.savedItem.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: { post: true, business: true },
+      take: limit + 1,
+      ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),
     });
+    return paginateByCursor(rows, limit);
   }
 }

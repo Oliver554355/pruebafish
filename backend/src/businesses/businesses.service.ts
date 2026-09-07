@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../photos/storage.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { NearbyBusinessQueryDto } from './dto/nearby-business-query.dto';
@@ -26,7 +27,10 @@ export interface NearbyBusinessRow {
 
 @Injectable()
 export class BusinessesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   create(createdById: string, dto: CreateBusinessDto) {
     return this.prisma.business.create({
@@ -47,7 +51,7 @@ export class BusinessesService {
   // Usa la columna "geog" (geography(Point,4326) + indice GIST) creada por
   // prisma/postgis-extensions.sql, igual que posts.findNearby.
   findNearby(query: NearbyBusinessQueryDto) {
-    const { lat, lng, radius = 3000, limit = 50, category } = query;
+    const { lat, lng, radius = 3000, limit = 50, offset = 0, category } = query;
     return this.prisma.$queryRaw<NearbyBusinessRow[]>(Prisma.sql`
       SELECT
         id, category, name, description, address, phone, hours, lat, lng,
@@ -62,7 +66,8 @@ export class BusinessesService {
       AND hidden = false
       ${category ? Prisma.sql`AND category = ${category}::"BusinessCategory"` : Prisma.empty}
       ORDER BY distance ASC
-      LIMIT ${limit};
+      LIMIT ${limit}
+      OFFSET ${offset};
     `);
   }
 
@@ -84,6 +89,7 @@ export class BusinessesService {
 
     return {
       ...business,
+      photos: await this.storage.signPhotos(business.photos),
       rating: {
         average: ratingAgg._avg.rating,
         count: ratingAgg._count.rating,

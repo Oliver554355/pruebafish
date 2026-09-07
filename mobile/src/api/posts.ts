@@ -26,13 +26,16 @@ export async function fetchPost(id: string): Promise<PostDetail> {
   return data;
 }
 
+export const FEED_PAGE_SIZE = 20;
+
 export async function fetchFeed(
   lat: number,
   lng: number,
   radius = 3000,
+  offset = 0,
 ): Promise<FeedPost[]> {
   const { data } = await api.get<FeedPost[]>('/posts/feed', {
-    params: { lat, lng, radius },
+    params: { lat, lng, radius, offset, limit: FEED_PAGE_SIZE },
   });
   return data;
 }

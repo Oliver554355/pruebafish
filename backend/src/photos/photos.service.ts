@@ -88,16 +88,20 @@ export class PhotosService {
       }
     }
 
-    const url = await this.storage.upload(file);
-    return this.prisma.photo.create({
+    const key = await this.storage.upload(file);
+    const photo = await this.prisma.photo.create({
       data: {
-        url,
+        key,
         postId: dto.postId,
         businessId: dto.businessId,
         productId: dto.productId,
         uploadedById: userId,
       },
     });
+    // El cliente necesita una URL usable ya mismo (la respuesta de este
+    // mismo POST), igual que cualquier otro lugar donde se listan fotos.
+    const [signed] = await this.storage.signPhotos([photo]);
+    return signed;
   }
 
   async remove(id: string, userId: string) {
@@ -106,7 +110,7 @@ export class PhotosService {
     if (photo.uploadedById !== userId) {
       throw new ForbiddenException('No podés borrar esta foto');
     }
-    await this.storage.delete(photo.url);
+    await this.storage.delete(photo.key);
     await this.prisma.photo.delete({ where: { id } });
   }
 }
