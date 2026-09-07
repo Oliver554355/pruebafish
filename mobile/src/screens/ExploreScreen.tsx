@@ -5,27 +5,35 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness } from '../types';
+import { BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
 
-function BusinessCard({ business }: { business: NearbyBusiness }) {
+function BusinessCard({
+  business,
+  onPress,
+}: {
+  business: NearbyBusiness;
+  onPress: () => void;
+}) {
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.cardHeader}>
         <Text style={styles.name}>{business.name}</Text>
         {business.verified && <Text style={styles.verified}>✓ verificado</Text>}
       </View>
-      <Text style={styles.category}>{business.category}</Text>
+      <Text style={styles.category}>{BUSINESS_CATEGORY_LABELS[business.category]}</Text>
       {business.address && <Text style={styles.address}>{business.address}</Text>}
       <Text style={styles.meta}>{(business.distance / 1000).toFixed(1)} km</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
-export default function ExploreScreen() {
+export default function ExploreScreen({ navigation }: any) {
   const { coords, loading: loadingLocation } = useCurrentLocation();
   const [businesses, setBusinesses] = useState<NearbyBusiness[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,28 +61,55 @@ export default function ExploreScreen() {
   }
 
   return (
-    <FlatList
-      contentContainerStyle={styles.listContent}
-      data={businesses}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <BusinessCard business={item} />}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={load} />
-      }
-      ListEmptyComponent={
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>
-            No hay negocios cargados cerca todavía.
-          </Text>
-        </View>
-      }
-    />
+    <View style={styles.flex}>
+      <FlatList
+        contentContainerStyle={styles.listContent}
+        data={businesses}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <BusinessCard
+            business={item}
+            onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
+          />
+        )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={load} />
+        }
+        ListEmptyComponent={
+          <View style={styles.center}>
+            <Text style={styles.emptyText}>
+              No hay negocios cargados cerca todavía.
+            </Text>
+          </View>
+        }
+      />
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('CreateBusiness')}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   listContent: { padding: 16 },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+  },
+  fabText: { color: '#fff', fontSize: 28, fontWeight: '600', marginTop: -2 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,

@@ -1,4 +1,4 @@
-import { PostCategory } from './types';
+import { BusinessCategory, PostCategory } from './types';
 
 // Colores por categoria (brief seccion 4.1: "los marcadores deben poder
 // diferenciarse visualmente segun su categoria"). Sin diseño definido
@@ -27,5 +27,19 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   EVENTO: 'Evento',
   AVISO: 'Aviso',
   VENTA: 'Venta',
+  OTRO: 'Otro',
+};
+
+export const BUSINESS_CATEGORY_LABELS: Record<BusinessCategory, string> = {
+  RESTAURANTE: 'Restaurante',
+  TIENDA: 'Tienda',
+  HOSTAL: 'Hostal',
+  PARQUE: 'Parque',
+  TURISMO: 'Turismo',
+  FARMACIA: 'Farmacia',
+  SALUD: 'Salud',
+  EDUCACION: 'Educación',
+  BANCO_CAJERO: 'Banco / Cajero',
+  PARADA: 'Parada',
   OTRO: 'Otro',
 };

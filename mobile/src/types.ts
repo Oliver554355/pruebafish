@@ -79,6 +79,23 @@ export interface FeedPost extends NearbyPost {
   score: number;
 }
 
+export interface BusinessDetail {
+  id: string;
+  category: BusinessCategory;
+  name: string;
+  description: string | null;
+  address: string | null;
+  phone: string | null;
+  hours: string | null;
+  lat: number;
+  lng: number;
+  createdById: string;
+  ownerId: string | null;
+  verified: boolean;
+  createdAt: string;
+  rating: { average: number | null; count: number };
+}
+
 export interface NearbyBusiness {
   id: string;
   category: BusinessCategory;

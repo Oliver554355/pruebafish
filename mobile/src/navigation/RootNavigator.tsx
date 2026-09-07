@@ -5,6 +5,8 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TabNavigator from './TabNavigator';
 import PostDetailScreen from '../screens/PostDetailScreen';
+import BusinessDetailScreen from '../screens/BusinessDetailScreen';
+import CreateBusinessScreen from '../screens/CreateBusinessScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +29,16 @@ export default function RootNavigator() {
         name="PostDetail"
         component={PostDetailScreen}
         options={{ headerShown: true, title: 'Publicación' }}
+      />
+      <Stack.Screen
+        name="BusinessDetail"
+        component={BusinessDetailScreen}
+        options={{ headerShown: true, title: 'Negocio' }}
+      />
+      <Stack.Screen
+        name="CreateBusiness"
+        component={CreateBusinessScreen}
+        options={{ headerShown: true, title: 'Agregar negocio' }}
       />
     </Stack.Navigator>
   );
