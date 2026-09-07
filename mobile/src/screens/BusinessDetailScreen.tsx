@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchBusiness } from '../api/businesses';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
@@ -79,6 +81,7 @@ function ReviewRow({
 export default function BusinessDetailScreen({ route, navigation }: any) {
   const { businessId } = route.params as { businessId: string };
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [business, setBusiness] = useState<BusinessDetail | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -105,7 +108,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
       setComments(commentsData);
       setLikeCount(summary.find((s) => s.type === 'LIKE')?.count ?? 0);
     } catch (err) {
-      Alert.alert('Error', 'No se pudo cargar el negocio.');
+      Alert.alert('Error', 'No se pudo cargar el point.');
     } finally {
       setLoading(false);
     }
@@ -159,6 +162,12 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
     } finally {
       setSending(false);
     }
+  }
+
+  function handleGetDirections() {
+    Linking.openURL(
+      `https://www.google.com/maps/dir/?api=1&destination=${business!.lat},${business!.lng}`,
+    );
   }
 
   function handleDeleteComment(id: string) {
@@ -256,6 +265,9 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               <TouchableOpacity style={styles.saveButton} onPress={handleToggleSave}>
                 <Text style={styles.saveText}>{saved ? '🔖 Guardado' : '🏷️ Guardar'}</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.directionsButton} onPress={handleGetDirections}>
+                <Text style={styles.directionsText}>🧭 Cómo llegar</Text>
+              </TouchableOpacity>
             </View>
 
             {user && business.ownerId === user.id ? (
@@ -263,7 +275,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                 style={styles.ownerButton}
                 onPress={() => navigation.navigate('BusinessPanel', { businessId })}
               >
-                <Text style={styles.ownerButtonText}>Panel del negocio</Text>
+                <Text style={styles.ownerButtonText}>Panel del point</Text>
               </TouchableOpacity>
             ) : (
               user &&
@@ -277,7 +289,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                     })
                   }
                 >
-                  <Text style={styles.claimButtonText}>Reclamar este negocio</Text>
+                  <Text style={styles.claimButtonText}>Reclamar este point</Text>
                 </TouchableOpacity>
               )
             )}
@@ -308,7 +320,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
           </View>
         }
       />
-      <View style={styles.inputBar}>
+      <View style={[styles.inputBar, { paddingBottom: 10 + insets.bottom }]}>
         <View style={styles.inputBarInner}>
           <StarPicker value={myRating} onChange={setMyRating} />
           <View style={styles.row}>
@@ -384,7 +396,7 @@ const styles = StyleSheet.create({
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   stars: { color: '#f59e0b', fontSize: 16 },
   ratingText: { color: '#6b7280', fontSize: 13 },
-  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 20 },
+  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14, marginBottom: 20 },
   likeButton: {
     alignSelf: 'flex-start',
     backgroundColor: '#f3f4f6',
@@ -401,6 +413,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   saveText: { fontSize: 15, fontWeight: '600' },
+  directionsButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  directionsText: { fontSize: 15, fontWeight: '600' },
   commentsTitle: { fontWeight: '700', fontSize: 15, marginBottom: 8 },
   commentRow: { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingVertical: 10 },
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between' },

@@ -47,7 +47,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
         lat: coords.lat,
         lng: coords.lng,
       });
-      Alert.alert('Listo', 'El negocio se agregó correctamente.');
+      Alert.alert('Listo', 'El point se creó correctamente.');
       navigation.goBack();
     } catch (err: any) {
       Alert.alert(
@@ -82,7 +82,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
       <Text style={styles.label}>Nombre</Text>
       <TextInput
         style={styles.input}
-        placeholder="Nombre del negocio"
+        placeholder="Nombre del point"
         value={name}
         onChangeText={setName}
       />
@@ -129,7 +129,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
         {submitting ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Agregar negocio</Text>
+          <Text style={styles.buttonText}>Crear point</Text>
         )}
       </TouchableOpacity>
     </ScrollView>

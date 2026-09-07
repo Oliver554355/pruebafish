@@ -39,22 +39,22 @@ export default function RootNavigator() {
       <Stack.Screen
         name="BusinessDetail"
         component={BusinessDetailScreen}
-        options={{ headerShown: true, title: 'Negocio' }}
+        options={{ headerShown: true, title: 'Point' }}
       />
       <Stack.Screen
         name="CreateBusiness"
         component={CreateBusinessScreen}
-        options={{ headerShown: true, title: 'Agregar negocio' }}
+        options={{ headerShown: true, title: 'Crear point' }}
       />
       <Stack.Screen
         name="BusinessPanel"
         component={BusinessPanelScreen}
-        options={{ headerShown: true, title: 'Panel del negocio' }}
+        options={{ headerShown: true, title: 'Panel del point' }}
       />
       <Stack.Screen
         name="ClaimBusiness"
         component={ClaimBusinessScreen}
-        options={{ headerShown: true, title: 'Reclamar negocio' }}
+        options={{ headerShown: true, title: 'Reclamar point' }}
       />
       <Stack.Screen
         name="Moderation"

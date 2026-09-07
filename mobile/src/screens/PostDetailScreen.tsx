@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchPost, markPostSold } from '../api/posts';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
@@ -67,6 +69,7 @@ function CommentRow({
 export default function PostDetailScreen({ route, navigation }: any) {
   const { postId } = route.params as { postId: string };
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -152,6 +155,12 @@ export default function PostDetailScreen({ route, navigation }: any) {
     } catch (err) {
       Alert.alert('Error', 'No se pudo marcar como vendida.');
     }
+  }
+
+  function handleGetDirections() {
+    Linking.openURL(
+      `https://www.google.com/maps/dir/?api=1&destination=${post!.lat},${post!.lng}`,
+    );
   }
 
   function handleDeleteComment(id: string) {
@@ -313,13 +322,16 @@ export default function PostDetailScreen({ route, navigation }: any) {
               <TouchableOpacity style={styles.saveButton} onPress={handleToggleSave}>
                 <Text style={styles.saveText}>{saved ? '🔖 Guardado' : '🏷️ Guardar'}</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.directionsButton} onPress={handleGetDirections}>
+                <Text style={styles.directionsText}>🧭 Cómo llegar</Text>
+              </TouchableOpacity>
             </View>
 
             <Text style={styles.commentsTitle}>Comentarios</Text>
           </View>
         }
       />
-      <View style={styles.inputBar}>
+      <View style={[styles.inputBar, { paddingBottom: 10 + insets.bottom }]}>
         <TextInput
           style={styles.input}
           placeholder="Escribí un comentario..."
@@ -379,7 +391,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   soldButtonText: { color: '#fff', fontWeight: '600' },
-  actionsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   likeButton: {
     alignSelf: 'flex-start',
     backgroundColor: '#f3f4f6',
@@ -396,6 +408,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   saveText: { fontSize: 15, fontWeight: '600' },
+  directionsButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  directionsText: { fontSize: 15, fontWeight: '600' },
   commentsTitle: { fontWeight: '700', fontSize: 15, marginBottom: 8 },
   commentRow: {
     borderTopWidth: 1,

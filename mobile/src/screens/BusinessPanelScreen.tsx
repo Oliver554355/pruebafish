@@ -61,7 +61,7 @@ export default function BusinessPanelScreen({ route }: any) {
       setPhone(businessData.phone ?? '');
       setHours(businessData.hours ?? '');
     } catch (err) {
-      Alert.alert('Error', 'No se pudo cargar el panel del negocio.');
+      Alert.alert('Error', 'No se pudo cargar el panel del point.');
     } finally {
       setLoading(false);
     }
@@ -295,7 +295,7 @@ export default function BusinessPanelScreen({ route }: any) {
         )}
       </TouchableOpacity>
 
-      <Text style={styles.sectionTitle}>Fotos del negocio</Text>
+      <Text style={styles.sectionTitle}>Fotos del point</Text>
       <ScrollView horizontal style={styles.photoRow}>
         {business.photos.map((photo) => (
           <TouchableOpacity

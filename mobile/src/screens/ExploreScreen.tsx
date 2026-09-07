@@ -78,7 +78,7 @@ export default function ExploreScreen({ navigation }: any) {
         ListEmptyComponent={
           <View style={styles.center}>
             <Text style={styles.emptyText}>
-              No hay negocios cargados cerca todavía.
+              No hay points cargados cerca todavía.
             </Text>
           </View>
         }

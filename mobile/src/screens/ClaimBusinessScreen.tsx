@@ -41,7 +41,7 @@ export default function ClaimBusinessScreen({ route, navigation }: any) {
     <View style={styles.container}>
       <Text style={styles.title}>Reclamar "{businessName}"</Text>
       <Text style={styles.description}>
-        Contanos por qué sos el dueño o encargado de este negocio. Un
+        Contanos por qué sos el dueño o encargado de este point. Un
         moderador revisa la solicitud antes de aprobarla.
       </Text>
       <TextInput
