@@ -1,5 +1,13 @@
 import { api } from './client';
-import { FeedPost, NearbyPost, PostCategory } from '../types';
+import {
+  AnimalSex,
+  AnimalSpecies,
+  FeedPost,
+  NearbyPost,
+  PostCategory,
+  PostDetail,
+  SaleCondition,
+} from '../types';
 
 export async function fetchNearbyPosts(
   lat: number,
@@ -13,8 +21,8 @@ export async function fetchNearbyPosts(
   return data;
 }
 
-export async function fetchPost(id: string): Promise<NearbyPost> {
-  const { data } = await api.get<NearbyPost>(`/posts/${id}`);
+export async function fetchPost(id: string): Promise<PostDetail> {
+  const { data } = await api.get<PostDetail>(`/posts/${id}`);
   return data;
 }
 
@@ -35,9 +43,33 @@ export interface CreatePostInput {
   description?: string;
   lat: number;
   lng: number;
+  animal?: {
+    species: AnimalSpecies;
+    petName?: string;
+    color?: string;
+    characteristics?: string;
+    sex?: AnimalSex;
+    approxAgeYears?: number;
+    adoptionConditions?: string;
+    contactPhone?: string;
+  };
+  event?: {
+    startsAt: string;
+    organizerName?: string;
+  };
+  sale?: {
+    price: number;
+    currency?: string;
+    condition?: SaleCondition;
+  };
 }
 
 export async function createPost(input: CreatePostInput) {
   const { data } = await api.post('/posts', input);
+  return data;
+}
+
+export async function markPostSold(id: string) {
+  const { data } = await api.patch(`/posts/${id}/mark-sold`);
   return data;
 }

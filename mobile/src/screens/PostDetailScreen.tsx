@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -11,11 +12,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { fetchPost } from '../api/posts';
+import { fetchPost, markPostSold } from '../api/posts';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
-import { Comment, NearbyPost } from '../types';
-import { CATEGORY_COLORS, CATEGORY_LABELS } from '../categoryStyle';
+import { Comment, PostDetail } from '../types';
+import {
+  ANIMAL_SEX_LABELS,
+  ANIMAL_SPECIES_LABELS,
+  CATEGORY_COLORS,
+  CATEGORY_LABELS,
+  SALE_CONDITION_LABELS,
+} from '../categoryStyle';
 import { useAuth } from '../context/AuthContext';
 
 function formatDate(iso: string) {
@@ -56,7 +63,7 @@ export default function PostDetailScreen({ route }: any) {
   const { postId } = route.params as { postId: string };
   const { user } = useAuth();
 
-  const [post, setPost] = useState<NearbyPost | null>(null);
+  const [post, setPost] = useState<PostDetail | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -114,6 +121,19 @@ export default function PostDetailScreen({ route }: any) {
       Alert.alert('No se pudo comentar', 'Intentá de nuevo en un momento.');
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleMarkSold() {
+    try {
+      await markPostSold(postId);
+      setPost((prev) =>
+        prev && prev.saleDetails
+          ? { ...prev, saleDetails: { ...prev.saleDetails, sold: true } }
+          : prev,
+      );
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo marcar como vendida.');
     }
   }
 
@@ -175,6 +195,92 @@ export default function PostDetailScreen({ route }: any) {
             {post.description && <Text style={styles.description}>{post.description}</Text>}
             <Text style={styles.date}>{formatDate(post.createdAt)}</Text>
 
+            {post.photos.length > 0 && (
+              <FlatList
+                horizontal
+                style={styles.photoRow}
+                data={post.photos}
+                keyExtractor={(p) => p.id}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item.url }} style={styles.photo} />
+                )}
+              />
+            )}
+
+            {post.animalDetails && (
+              <View style={styles.detailsBox}>
+                <Text style={styles.detailsTitle}>Datos del animal</Text>
+                <Text style={styles.detailsRow}>
+                  Especie: {ANIMAL_SPECIES_LABELS[post.animalDetails.species]}
+                </Text>
+                {post.animalDetails.petName && (
+                  <Text style={styles.detailsRow}>Nombre: {post.animalDetails.petName}</Text>
+                )}
+                {post.animalDetails.color && (
+                  <Text style={styles.detailsRow}>Color: {post.animalDetails.color}</Text>
+                )}
+                {post.animalDetails.sex && (
+                  <Text style={styles.detailsRow}>
+                    Sexo: {ANIMAL_SEX_LABELS[post.animalDetails.sex]}
+                  </Text>
+                )}
+                {post.animalDetails.approxAgeYears != null && (
+                  <Text style={styles.detailsRow}>
+                    Edad aproximada: {post.animalDetails.approxAgeYears} años
+                  </Text>
+                )}
+                {post.animalDetails.characteristics && (
+                  <Text style={styles.detailsRow}>
+                    Características: {post.animalDetails.characteristics}
+                  </Text>
+                )}
+                {post.animalDetails.adoptionConditions && (
+                  <Text style={styles.detailsRow}>
+                    Condiciones de adopción: {post.animalDetails.adoptionConditions}
+                  </Text>
+                )}
+                {post.animalDetails.contactPhone && (
+                  <Text style={styles.detailsRow}>
+                    Contacto: {post.animalDetails.contactPhone}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {post.eventDetails && (
+              <View style={styles.detailsBox}>
+                <Text style={styles.detailsTitle}>Datos del evento</Text>
+                <Text style={styles.detailsRow}>
+                  Fecha: {formatDate(post.eventDetails.startsAt)}
+                </Text>
+                {post.eventDetails.organizerName && (
+                  <Text style={styles.detailsRow}>
+                    Organiza: {post.eventDetails.organizerName}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {post.saleDetails && (
+              <View style={styles.detailsBox}>
+                <Text style={styles.detailsTitle}>Datos de la venta</Text>
+                <Text style={styles.priceRow}>
+                  {post.saleDetails.currency} {post.saleDetails.price}
+                  {post.saleDetails.sold ? '  ·  Vendido' : ''}
+                </Text>
+                {post.saleDetails.condition && (
+                  <Text style={styles.detailsRow}>
+                    Condición: {SALE_CONDITION_LABELS[post.saleDetails.condition]}
+                  </Text>
+                )}
+                {!post.saleDetails.sold && post.authorId === user?.id && (
+                  <TouchableOpacity style={styles.soldButton} onPress={handleMarkSold}>
+                    <Text style={styles.soldButtonText}>Marcar como vendida</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
             <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
               <Text style={styles.likeText}>
                 {liked ? '❤️' : '🤍'} {likeCount}
@@ -224,6 +330,26 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700', marginBottom: 6 },
   description: { color: '#374151', fontSize: 15, marginBottom: 8 },
   date: { color: '#6b7280', fontSize: 12, marginBottom: 14 },
+  photoRow: { marginBottom: 14 },
+  photo: { width: 150, height: 110, borderRadius: 10, marginRight: 8 },
+  detailsBox: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+  },
+  detailsTitle: { fontWeight: '700', marginBottom: 6 },
+  detailsRow: { color: '#374151', marginBottom: 3 },
+  priceRow: { fontSize: 17, fontWeight: '700', color: '#0891b2', marginBottom: 4 },
+  soldButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  soldButtonText: { color: '#fff', fontWeight: '600' },
   likeButton: {
     alignSelf: 'flex-start',
     backgroundColor: '#f3f4f6',

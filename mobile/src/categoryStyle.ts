@@ -1,4 +1,4 @@
-import { BusinessCategory, PostCategory } from './types';
+import { AnimalSex, AnimalSpecies, BusinessCategory, PostCategory, SaleCondition } from './types';
 
 // Colores por categoria (brief seccion 4.1: "los marcadores deben poder
 // diferenciarse visualmente segun su categoria"). Sin diseño definido
@@ -28,6 +28,24 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   AVISO: 'Aviso',
   VENTA: 'Venta',
   OTRO: 'Otro',
+};
+
+export const ANIMAL_SPECIES_LABELS: Record<AnimalSpecies, string> = {
+  PERRO: 'Perro',
+  GATO: 'Gato',
+  AVE: 'Ave',
+  OTRO: 'Otro',
+};
+
+export const ANIMAL_SEX_LABELS: Record<AnimalSex, string> = {
+  MACHO: 'Macho',
+  HEMBRA: 'Hembra',
+  DESCONOCIDO: 'No sé',
+};
+
+export const SALE_CONDITION_LABELS: Record<SaleCondition, string> = {
+  NUEVO: 'Nuevo',
+  USADO: 'Usado',
 };
 
 export const BUSINESS_CATEGORY_LABELS: Record<BusinessCategory, string> = {

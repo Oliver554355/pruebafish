@@ -13,6 +13,10 @@ export type PostCategory =
   | 'VENTA'
   | 'OTRO';
 
+export type AnimalSpecies = 'PERRO' | 'GATO' | 'AVE' | 'OTRO';
+export type AnimalSex = 'MACHO' | 'HEMBRA' | 'DESCONOCIDO';
+export type SaleCondition = 'NUEVO' | 'USADO';
+
 export type BusinessCategory =
   | 'RESTAURANTE'
   | 'TIENDA'
@@ -77,6 +81,37 @@ export interface FeedPost extends NearbyPost {
   reactionCount: number;
   commentCount: number;
   score: number;
+}
+
+export interface AnimalDetails {
+  species: AnimalSpecies;
+  petName: string | null;
+  color: string | null;
+  characteristics: string | null;
+  sex: AnimalSex | null;
+  approxAgeYears: number | null;
+  adoptionConditions: string | null;
+  contactPhone: string | null;
+}
+
+export interface EventDetails {
+  startsAt: string;
+  organizerName: string | null;
+}
+
+export interface SaleDetails {
+  price: string;
+  currency: string;
+  condition: SaleCondition | null;
+  sold: boolean;
+}
+
+export interface PostDetail extends NearbyPost {
+  author: { id: string; username: string };
+  photos: Photo[];
+  animalDetails: AnimalDetails | null;
+  eventDetails: EventDetails | null;
+  saleDetails: SaleDetails | null;
 }
 
 export interface Photo {
