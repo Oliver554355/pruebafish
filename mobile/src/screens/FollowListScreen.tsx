@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchFollowers, fetchFollowing } from '../api/users';
 import { FollowEntry } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { colors, radius, spacing } from '../theme';
 
 export default function FollowListScreen({ route, navigation }: any) {
   const { userId, mode } = route.params as { userId: string; mode: 'followers' | 'following' };
@@ -20,13 +22,14 @@ export default function FollowListScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
 
   return (
     <FlatList
+      style={styles.list}
       contentContainerStyle={styles.listContent}
       data={entries}
       keyExtractor={(item) => item.id}
@@ -47,8 +50,13 @@ export default function FollowListScreen({ route, navigation }: any) {
                 ? navigation.navigate('Main', { screen: 'Perfil' })
                 : navigation.navigate('UserProfile', { userId: person.id })
             }
+            activeOpacity={0.85}
           >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{person.username.charAt(0).toUpperCase()}</Text>
+            </View>
             <Text style={styles.username}>{person.username}</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         );
       }}
@@ -57,16 +65,29 @@ export default function FollowListScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: '#6b7280' },
-  listContent: { padding: 16 },
+  list: { backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xxl, backgroundColor: colors.bg },
+  emptyText: { color: colors.textMuted },
+  listContent: { padding: spacing.lg },
   row: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
-  username: { fontWeight: '600', fontSize: 15 },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { color: colors.onPrimary, fontWeight: '700' },
+  username: { flex: 1, color: colors.text, fontWeight: '600', fontSize: 15 },
 });

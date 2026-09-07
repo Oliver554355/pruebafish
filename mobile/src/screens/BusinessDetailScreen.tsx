@@ -14,14 +14,16 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchBusiness } from '../api/businesses';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
 import { fetchProducts } from '../api/products';
 import { toggleSaved } from '../api/saved';
 import { BusinessDetail, Comment, Product } from '../types';
-import { BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICONS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useAuth } from '../context/AuthContext';
+import { card, colors, radius, spacing, typography } from '../theme';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('es-PE', {
@@ -33,7 +35,13 @@ function formatDate(iso: string) {
 }
 
 function Stars({ value }: { value: number }) {
-  return <Text style={styles.stars}>{'★'.repeat(value)}{'☆'.repeat(5 - value)}</Text>;
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Ionicons key={n} name={n <= value ? 'star' : 'star-outline'} size={15} color={colors.warning} />
+      ))}
+    </View>
+  );
 }
 
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -41,7 +49,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
     <View style={styles.starPicker}>
       {[1, 2, 3, 4, 5].map((n) => (
         <TouchableOpacity key={n} onPress={() => onChange(n)}>
-          <Text style={styles.starPickerStar}>{n <= value ? '★' : '☆'}</Text>
+          <Ionicons name={n <= value ? 'star' : 'star-outline'} size={22} color={colors.warning} />
         </TouchableOpacity>
       ))}
     </View>
@@ -207,7 +215,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   if (loading || !business) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -237,16 +245,39 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
         ListHeaderComponent={
           <View>
             <View style={styles.headerRow}>
+              <View style={[styles.categoryIcon, { backgroundColor: BUSINESS_CATEGORY_COLORS[business.category] }]}>
+                <Ionicons name={BUSINESS_CATEGORY_ICONS[business.category]} size={18} color={colors.onPrimary} />
+              </View>
               <Text style={styles.categoryTag}>{BUSINESS_CATEGORY_LABELS[business.category]}</Text>
-              {business.verified && <Text style={styles.verified}>✓ verificado</Text>}
+              {business.verified && (
+                <View style={styles.verifiedBadge}>
+                  <Ionicons name="checkmark-circle" size={13} color={colors.success} />
+                  <Text style={styles.verified}>Verificado</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.title}>{business.name}</Text>
             {business.description && (
               <Text style={styles.description}>{business.description}</Text>
             )}
-            {business.address && <Text style={styles.meta}>📍 {business.address}</Text>}
-            {business.phone && <Text style={styles.meta}>📞 {business.phone}</Text>}
-            {business.hours && <Text style={styles.meta}>🕒 {business.hours}</Text>}
+            {business.address && (
+              <View style={styles.metaRow}>
+                <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+                <Text style={styles.meta}>{business.address}</Text>
+              </View>
+            )}
+            {business.phone && (
+              <View style={styles.metaRow}>
+                <Ionicons name="call-outline" size={14} color={colors.textMuted} />
+                <Text style={styles.meta}>{business.phone}</Text>
+              </View>
+            )}
+            {business.hours && (
+              <View style={styles.metaRow}>
+                <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                <Text style={styles.meta}>{business.hours}</Text>
+              </View>
+            )}
 
             {business.photos.length > 0 && (
               <FlatList
@@ -274,14 +305,17 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             </View>
 
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
-                <Text style={styles.likeText}>{liked ? '❤️' : '🤍'} {likeCount}</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleToggleLike}>
+                <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? colors.danger : colors.text} />
+                <Text style={styles.actionText}>{likeCount}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleToggleSave}>
-                <Text style={styles.saveText}>{saved ? '🔖 Guardado' : '🏷️ Guardar'}</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleToggleSave}>
+                <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={16} color={saved ? colors.primary : colors.text} />
+                <Text style={styles.actionText}>{saved ? 'Guardado' : 'Guardar'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.directionsButton} onPress={handleGetDirections}>
-                <Text style={styles.directionsText}>🧭 Cómo llegar</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleGetDirections}>
+                <Ionicons name="navigate-outline" size={16} color={colors.text} />
+                <Text style={styles.actionText}>Cómo llegar</Text>
               </TouchableOpacity>
             </View>
 
@@ -290,6 +324,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                 style={styles.ownerButton}
                 onPress={() => navigation.navigate('BusinessPanel', { businessId })}
               >
+                <Ionicons name="settings-outline" size={15} color={colors.onPrimary} />
                 <Text style={styles.ownerButtonText}>Panel del point</Text>
               </TouchableOpacity>
             ) : (
@@ -337,7 +372,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
         onEndReachedThreshold={0.4}
         onEndReached={loadMoreComments}
         ListFooterComponent={
-          loadingMoreComments ? <ActivityIndicator style={styles.footer} /> : null
+          loadingMoreComments ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : null
         }
       />
       <View style={[styles.inputBar, { paddingBottom: 10 + insets.bottom }]}>
@@ -347,6 +382,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             <TextInput
               style={styles.input}
               placeholder="Escribí tu reseña..."
+              placeholderTextColor={colors.textFaint}
               value={reviewText}
               onChangeText={setReviewText}
               multiline
@@ -357,9 +393,9 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               disabled={sending}
             >
               {sending ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={colors.onPrimary} size="small" />
               ) : (
-                <Text style={styles.sendText}>Enviar</Text>
+                <Ionicons name="send" size={18} color={colors.onPrimary} />
               )}
             </TouchableOpacity>
           </View>
@@ -370,106 +406,105 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  listContent: { padding: 16, paddingBottom: 8 },
-  photoRow: { marginTop: 10 },
-  photo: { width: 130, height: 100, borderRadius: 10, marginRight: 8 },
+  flex: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  listContent: { padding: spacing.lg, paddingBottom: spacing.sm },
+  photoRow: { marginTop: spacing.sm },
+  photo: { width: 130, height: 100, borderRadius: radius.md, marginRight: spacing.sm },
   ownerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     alignSelf: 'flex-start',
-    backgroundColor: '#111827',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: -6,
-    marginBottom: 20,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xl,
   },
-  ownerButtonText: { color: '#fff', fontWeight: '600' },
+  ownerButtonText: { color: colors.onPrimary, fontWeight: '700' },
   claimButton: {
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#2563eb',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: -6,
-    marginBottom: 20,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xl,
   },
-  claimButtonText: { color: '#2563eb', fontWeight: '600' },
+  claimButtonText: { color: colors.primary, fontWeight: '600' },
   productRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.border,
   },
-  productPhoto: { width: 48, height: 48, borderRadius: 8 },
-  productName: { fontWeight: '600' },
-  productPrice: { color: '#16a34a', fontWeight: '700' },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  categoryTag: { color: '#2563eb', fontWeight: '600', fontSize: 13 },
-  verified: { color: '#16a34a', fontSize: 12, fontWeight: '600' },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 6 },
-  description: { color: '#374151', fontSize: 15, marginBottom: 8 },
-  meta: { color: '#6b7280', fontSize: 13, marginBottom: 2 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  stars: { color: '#f59e0b', fontSize: 16 },
-  ratingText: { color: '#6b7280', fontSize: 13 },
-  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14, marginBottom: 20 },
-  likeButton: {
+  productPhoto: { width: 48, height: 48, borderRadius: radius.sm },
+  productName: { color: colors.text, fontWeight: '600' },
+  productPrice: { color: colors.success, fontWeight: '700' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  categoryIcon: { width: 28, height: 28, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  categoryTag: { color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 },
+  verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  verified: { color: colors.success, fontSize: 12, fontWeight: '600' },
+  title: { ...typography.h1, fontSize: 20, marginBottom: spacing.xs },
+  description: { ...typography.body, marginBottom: spacing.sm },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 },
+  meta: { ...typography.bodyMuted, fontSize: 13 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  ratingText: { ...typography.caption },
+  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg, marginBottom: spacing.xl },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     alignSelf: 'flex-start',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  likeText: { fontSize: 15, fontWeight: '600' },
-  saveButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  saveText: { fontSize: 15, fontWeight: '600' },
-  directionsButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  directionsText: { fontSize: 15, fontWeight: '600' },
-  commentsTitle: { fontWeight: '700', fontSize: 15, marginBottom: 8 },
-  commentRow: { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingVertical: 10 },
+  actionText: { color: colors.text, fontSize: 13, fontWeight: '600' },
+  commentsTitle: { ...typography.h3, marginBottom: spacing.sm },
+  commentRow: { borderTopWidth: 1, borderTopColor: colors.border, paddingVertical: spacing.sm },
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-  commentAuthor: { fontWeight: '600' },
-  commentTime: { color: '#9ca3af', fontSize: 11 },
-  commentContent: { marginTop: 4, color: '#111827' },
-  deleteLink: { color: '#dc2626', fontSize: 12, marginTop: 6 },
-  emptyText: { color: '#6b7280', paddingVertical: 16 },
-  footer: { marginVertical: 16 },
+  commentAuthor: { color: colors.text, fontWeight: '600' },
+  commentTime: { color: colors.textFaint, fontSize: 11 },
+  commentContent: { marginTop: 4, color: colors.textMuted },
+  deleteLink: { color: colors.danger, fontSize: 12, marginTop: 6 },
+  emptyText: { color: colors.textMuted, paddingVertical: spacing.lg },
+  footer: { marginVertical: spacing.lg },
   inputBar: {
-    padding: 10,
+    padding: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    backgroundColor: '#fff',
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  inputBarInner: { gap: 6 },
+  inputBarInner: { gap: spacing.xs },
   starPicker: { flexDirection: 'row', gap: 4 },
-  starPickerStar: { fontSize: 24, color: '#f59e0b' },
   row: { flexDirection: 'row', alignItems: 'flex-end' },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     maxHeight: 100,
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
-  sendButton: { backgroundColor: '#2563eb', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 },
-  sendText: { color: '#fff', fontWeight: '600' },
+  sendButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

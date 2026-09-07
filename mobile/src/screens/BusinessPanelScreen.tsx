@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchBusiness, updateBusiness } from '../api/businesses';
 import {
   createProduct,
@@ -20,6 +21,7 @@ import {
 import { deletePhoto, uploadPhoto } from '../api/photos';
 import { pickImage } from '../pickImage';
 import { BusinessDetail, Product } from '../types';
+import { colors, radius, spacing, typography } from '../theme';
 
 export default function BusinessPanelScreen({ route }: any) {
   const { businessId } = route.params as { businessId: string };
@@ -255,7 +257,7 @@ export default function BusinessPanelScreen({ route }: any) {
   if (loading || !business) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -265,10 +267,11 @@ export default function BusinessPanelScreen({ route }: any) {
       <Text style={styles.title}>Panel de {business.name}</Text>
 
       <Text style={styles.sectionTitle}>Información</Text>
-      <TextInput style={styles.input} placeholder="Nombre" value={name} onChangeText={setName} />
+      <TextInput style={styles.input} placeholder="Nombre" placeholderTextColor={colors.textFaint} value={name} onChangeText={setName} />
       <TextInput
         style={[styles.input, styles.textarea]}
         placeholder="Descripción"
+        placeholderTextColor={colors.textFaint}
         value={description}
         onChangeText={setDescription}
         multiline
@@ -276,20 +279,22 @@ export default function BusinessPanelScreen({ route }: any) {
       <TextInput
         style={styles.input}
         placeholder="Dirección"
+        placeholderTextColor={colors.textFaint}
         value={address}
         onChangeText={setAddress}
       />
       <TextInput
         style={styles.input}
         placeholder="Teléfono"
+        placeholderTextColor={colors.textFaint}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
       />
-      <TextInput style={styles.input} placeholder="Horario" value={hours} onChangeText={setHours} />
+      <TextInput style={styles.input} placeholder="Horario" placeholderTextColor={colors.textFaint} value={hours} onChangeText={setHours} />
       <TouchableOpacity style={styles.button} onPress={handleSaveInfo} disabled={savingInfo}>
         {savingInfo ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
           <Text style={styles.buttonText}>Guardar cambios</Text>
         )}
@@ -311,9 +316,12 @@ export default function BusinessPanelScreen({ route }: any) {
           disabled={uploadingBusinessPhoto}
         >
           {uploadingBusinessPhoto ? (
-            <ActivityIndicator />
+            <ActivityIndicator color={colors.primary} />
           ) : (
-            <Text style={styles.addPhotoText}>+ Foto</Text>
+            <>
+              <Ionicons name="camera-outline" size={20} color={colors.primary} />
+              <Text style={styles.addPhotoText}>Foto</Text>
+            </>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -327,12 +335,14 @@ export default function BusinessPanelScreen({ route }: any) {
               <TextInput
                 style={styles.input}
                 placeholder="Nombre"
+                placeholderTextColor={colors.textFaint}
                 value={editName}
                 onChangeText={setEditName}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Precio (opcional)"
+                placeholderTextColor={colors.textFaint}
                 value={editPrice}
                 onChangeText={setEditPrice}
                 keyboardType="decimal-pad"
@@ -375,9 +385,9 @@ export default function BusinessPanelScreen({ route }: any) {
                   disabled={uploadingProductPhotoId === product.id}
                 >
                   {uploadingProductPhotoId === product.id ? (
-                    <ActivityIndicator size="small" />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
-                    <Text style={styles.addPhotoText}>+ Foto</Text>
+                    <Ionicons name="camera-outline" size={18} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               </ScrollView>
@@ -398,19 +408,21 @@ export default function BusinessPanelScreen({ route }: any) {
         <TextInput
           style={styles.input}
           placeholder="Nombre del producto"
+          placeholderTextColor={colors.textFaint}
           value={newProductName}
           onChangeText={setNewProductName}
         />
         <TextInput
           style={styles.input}
           placeholder="Precio (opcional)"
+          placeholderTextColor={colors.textFaint}
           value={newProductPrice}
           onChangeText={setNewProductPrice}
           keyboardType="decimal-pad"
         />
         <TouchableOpacity style={styles.button} onPress={handleAddProduct} disabled={addingProduct}>
           {addingProduct ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
             <Text style={styles.buttonText}>Agregar producto</Text>
           )}
@@ -421,65 +433,75 @@ export default function BusinessPanelScreen({ route }: any) {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 16, paddingBottom: 48 },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
-  sectionTitle: { fontWeight: '700', fontSize: 16, marginTop: 24, marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 8 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  container: { padding: spacing.lg, paddingBottom: 48, backgroundColor: colors.bg },
+  title: { ...typography.h1, fontSize: 20, marginBottom: spacing.sm },
+  sectionTitle: { ...typography.h3, fontSize: 16, marginTop: spacing.xl, marginBottom: spacing.sm },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    color: colors.text,
+  },
   textarea: { height: 70, textAlignVertical: 'top' },
-  hint: { color: '#6b7280', fontSize: 12, marginTop: 6 },
+  hint: { ...typography.caption, marginTop: spacing.xs },
   button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
     padding: 14,
     alignItems: 'center',
     marginTop: 4,
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
+  buttonText: { color: colors.onPrimary, fontWeight: '700' },
   photoRow: { flexDirection: 'row' },
-  photo: { width: 100, height: 100, borderRadius: 10, marginRight: 8 },
-  photoSmall: { width: 72, height: 72, borderRadius: 8, marginRight: 8 },
+  photo: { width: 100, height: 100, borderRadius: radius.md, marginRight: spacing.sm },
+  photoSmall: { width: 72, height: 72, borderRadius: radius.sm, marginRight: spacing.sm },
   addPhoto: {
     width: 100,
     height: 100,
-    borderRadius: 10,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
   addPhotoSmall: {
     width: 72,
     height: 72,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPhotoText: { color: '#2563eb', fontWeight: '600', fontSize: 12 },
+  addPhotoText: { color: colors.primary, fontWeight: '600', fontSize: 12 },
   productCard: {
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
-  productHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  productName: { fontWeight: '700', fontSize: 15 },
-  productPrice: { color: '#16a34a', fontWeight: '700' },
-  row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  productHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
+  productName: { ...typography.h3, fontSize: 15 },
+  productPrice: { color: colors.success, fontWeight: '700' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
   smallButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
-  cancelButton: { backgroundColor: '#f3f4f6' },
-  cancelButtonText: { color: '#374151', fontWeight: '600' },
-  link: { color: '#2563eb', fontWeight: '600' },
-  deleteLink: { color: '#dc2626', fontWeight: '600' },
-  addProductBox: { marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+  cancelButton: { backgroundColor: colors.surfaceAlt },
+  cancelButtonText: { color: colors.text, fontWeight: '600' },
+  link: { color: colors.primary, fontWeight: '600' },
+  deleteLink: { color: colors.danger, fontWeight: '600' },
+  addProductBox: { marginTop: spacing.sm, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
 });

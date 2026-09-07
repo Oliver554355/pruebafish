@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { colors, radius, spacing, typography } from '../theme';
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -32,23 +34,35 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.logoBadge}>
+        <Ionicons name="location" size={40} color={colors.onPrimary} />
+      </View>
       <Text style={styles.title}>Comunidad Chosica</Text>
+      <Text style={styles.subtitle}>Tu comunidad, en un solo lugar</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Correo electrónico"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.inputRow}>
+        <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Correo electrónico"
+          placeholderTextColor={colors.textFaint}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+      </View>
+      <View style={styles.inputRow}>
+        <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Contraseña"
+          placeholderTextColor={colors.textFaint}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+      </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -58,7 +72,7 @@ export default function LoginScreen({ navigation }: any) {
         disabled={submitting}
       >
         {submitting ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
           <Text style={styles.buttonText}>Iniciar sesión</Text>
         )}
@@ -72,28 +86,39 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    padding: 14,
+  container: { flex: 1, justifyContent: 'center', padding: spacing.xl, backgroundColor: colors.bg },
+  logoBadge: {
+    alignSelf: 'center',
+    width: 76,
+    height: 76,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
-  link: { marginTop: 16, textAlign: 'center', color: '#2563eb' },
-  error: { color: '#dc2626', marginBottom: 12 },
+  title: { ...typography.h1, textAlign: 'center' },
+  subtitle: { ...typography.bodyMuted, textAlign: 'center', marginBottom: spacing.xxl, marginTop: spacing.xs },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  inputIcon: { marginRight: spacing.sm },
+  input: { flex: 1, paddingVertical: 14, color: colors.text, fontSize: 15 },
+  button: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 15 },
+  link: { marginTop: spacing.lg, textAlign: 'center', color: colors.primary, fontWeight: '600' },
+  error: { color: colors.danger, marginBottom: spacing.md },
 });

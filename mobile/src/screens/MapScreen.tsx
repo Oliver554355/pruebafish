@@ -2,43 +2,87 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchNearbyPosts } from '../api/posts';
 import { fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness, NearbyPost } from '../types';
-import { CATEGORY_COLORS, CATEGORY_LABELS } from '../categoryStyle';
+import { CATEGORY_COLORS, CATEGORY_LABELS, BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
+import { colors, radius, spacing, typography } from '../theme';
 
 const RADIUS_METERS = 5000;
+
+// Emoji por categoría para los pines del mapa: el WebView no puede usar
+// Ionicons (son una fuente de icono nativa), así que se usa emoji para
+// mantener el look "colorido por categoría" del mockup dentro de Leaflet.
+const POST_EMOJI: Record<string, string> = {
+  ACCIDENTE: '🚨',
+  INCIDENTE: '⚠️',
+  ANIMAL_PERDIDO: '🐾',
+  ANIMAL_ENCONTRADO: '🐾',
+  ADOPCION: '❤️',
+  RECOMENDACION: '⭐',
+  EVENTO: '📅',
+  AVISO: '📢',
+  VENTA: '🏷️',
+  OTRO: '📍',
+};
+
+const BUSINESS_EMOJI: Record<string, string> = {
+  RESTAURANTE: '🍽️',
+  TIENDA: '🏪',
+  HOSTAL: '🛏️',
+  PARQUE: '🌳',
+  TURISMO: '📷',
+  FARMACIA: '⚕️',
+  SALUD: '🏥',
+  EDUCACION: '🏫',
+  BANCO_CAJERO: '💵',
+  PARADA: '🚌',
+  OTRO: '📍',
+};
 
 // react-native-maps en Android necesita una API key de Google Maps para que
 // el MapView nativo ni siquiera se construya (revienta con
 // "IllegalStateException: API key not found" aunque solo quieras dibujar
 // teselas propias encima). Para no depender de una cuenta de Google Cloud,
-// el mapa se dibuja con Leaflet + OpenStreetMap dentro de un WebView --
-// mismo enfoque que ya usamos en el dashboard de CyberTracker.
+// el mapa se dibuja con Leaflet + teselas oscuras de CARTO dentro de un
+// WebView -- mismo enfoque que ya usamos en el dashboard de CyberTracker,
+// con teselas "dark_all" para que combine con el tema oscuro de la app.
 function buildMapHtml() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  html,body,#map{height:100%;margin:0;padding:0}
-  .me-dot{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;
-    box-shadow:0 0 0 3px rgba(37,99,235,0.35);}
-  .me-pulse{width:18px;height:18px;border-radius:50%;background:rgba(37,99,235,0.35);
+  html,body,#map{height:100%;margin:0;padding:0;background:#0B1220}
+  .me-dot{width:18px;height:18px;border-radius:50%;background:#3B82F6;border:3px solid #F1F5F9;
+    box-shadow:0 0 0 3px rgba(59,130,246,0.35);}
+  .me-pulse{width:18px;height:18px;border-radius:50%;background:rgba(59,130,246,0.35);
     animation:pulse 1.8s ease-out infinite;}
   @keyframes pulse{
     0%{transform:scale(1);opacity:0.8}
     100%{transform:scale(3.2);opacity:0}
   }
-  .point-pin{font-size:26px;line-height:26px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));}
+  .pin{width:30px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;border:2px solid #F1F5F9;box-shadow:0 2px 5px rgba(0,0,0,0.5);}
+  .leaflet-popup-content-wrapper{background:#141B2E;color:#F1F5F9;border-radius:12px;}
+  .leaflet-popup-tip{background:#141B2E;}
+  .leaflet-popup-content b{color:#F1F5F9;}
+  .leaflet-popup-content{color:#94A3B8;}
+  .leaflet-control-zoom a{background:#141B2E !important;color:#F1F5F9 !important;border-color:#263248 !important;}
 </style>
 </head><body>
 <div id="map"></div>
 <script>
   const map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, attribution: '© OpenStreetMap'
+  // CARTO's dark_all tiles ahora piden API key (dejaron de servir anonimo),
+  // asi que se usa el basemap oscuro gratuito de Esri (sin key requerida).
+  L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16, attribution: '© Esri'
+  }).addTo(map);
+  L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16, attribution: '© Esri'
   }).addTo(map);
 
   let markers = [];
@@ -48,7 +92,15 @@ function buildMapHtml() {
 
   const meIcon = L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [18, 18] });
   const mePulseIcon = L.divIcon({ className: '', html: '<div class="me-pulse"></div>', iconSize: [18, 18] });
-  const pointIcon = L.divIcon({ className: '', html: '<div class="point-pin">📍</div>', iconSize: [26, 26], iconAnchor: [13, 24] });
+
+  function pinIcon(color, emoji) {
+    return L.divIcon({
+      className: '',
+      html: '<div class="pin" style="background:' + color + '">' + emoji + '</div>',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    });
+  }
 
   function post(msg) {
     window.ReactNativeWebView.postMessage(JSON.stringify(msg));
@@ -73,14 +125,14 @@ function buildMapHtml() {
     } else if (data.type === 'posts') {
       markers.forEach(m => map.removeLayer(m));
       markers = data.posts.map(p =>
-        L.circleMarker([p.lat, p.lng], {
-          radius: 9, color: '#fff', weight: 2, fillColor: p.color, fillOpacity: 0.9
-        }).bindPopup('<b>' + p.title + '</b><br>' + p.categoryLabel).addTo(map)
+        L.marker([p.lat, p.lng], { icon: pinIcon(p.color, p.emoji) })
+          .bindPopup('<b>' + p.title + '</b><br>' + p.categoryLabel)
+          .addTo(map)
       );
     } else if (data.type === 'businesses') {
       businessMarkers.forEach(m => map.removeLayer(m));
       businessMarkers = data.businesses.map(b =>
-        L.marker([b.lat, b.lng], { icon: pointIcon })
+        L.marker([b.lat, b.lng], { icon: pinIcon(b.color, b.emoji) })
           .bindPopup('<b>' + b.name + '</b><br>' + b.categoryLabel)
           .on('click', () => post({ type: 'businessClick', id: b.id }))
           .addTo(map)
@@ -134,6 +186,7 @@ export default function MapScreen({ navigation }: any) {
         title: p.title,
         categoryLabel: CATEGORY_LABELS[p.category],
         color: CATEGORY_COLORS[p.category],
+        emoji: POST_EMOJI[p.category] ?? '📍',
       })),
     });
   }, [posts, postToWebView]);
@@ -146,7 +199,9 @@ export default function MapScreen({ navigation }: any) {
         lat: b.lat,
         lng: b.lng,
         name: b.name,
-        categoryLabel: b.category,
+        categoryLabel: BUSINESS_CATEGORY_LABELS[b.category] ?? b.category,
+        color: BUSINESS_CATEGORY_COLORS[b.category] ?? colors.primary,
+        emoji: BUSINESS_EMOJI[b.category] ?? '📍',
       })),
     });
   }, [businesses, postToWebView]);
@@ -180,7 +235,7 @@ export default function MapScreen({ navigation }: any) {
   if (loadingLocation || !coords) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -199,14 +254,14 @@ export default function MapScreen({ navigation }: any) {
       />
       {loadingPosts && (
         <View style={styles.loadingBadge}>
-          <ActivityIndicator size="small" />
+          <ActivityIndicator size="small" color={colors.primary} />
         </View>
       )}
       <TouchableOpacity style={styles.recenterButton} onPress={handleRecenter} disabled={recentering}>
         {recentering ? (
-          <ActivityIndicator size="small" color="#2563eb" />
+          <ActivityIndicator size="small" color={colors.primary} />
         ) : (
-          <Text style={styles.recenterIcon}>◎</Text>
+          <Ionicons name="locate" size={22} color={colors.primary} />
         )}
       </TouchableOpacity>
       <View style={styles.countBadge}>
@@ -219,15 +274,17 @@ export default function MapScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   loadingBadge: {
     position: 'absolute',
     top: 50,
     right: 16,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
     elevation: 2,
   },
   recenterButton: {
@@ -237,20 +294,23 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
   },
-  recenterIcon: { fontSize: 22, color: '#2563eb' },
   countBadge: {
     position: 'absolute',
     bottom: 24,
     alignSelf: 'center',
-    backgroundColor: '#111827',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
   },
-  countText: { color: '#fff', fontWeight: '600' },
+  countText: { ...typography.caption, color: colors.text, fontWeight: '600' },
 });

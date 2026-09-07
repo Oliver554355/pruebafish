@@ -9,8 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchBusinessClaims, reviewBusinessClaim } from '../api/businessClaims';
 import { BusinessClaim } from '../types';
+import { card, colors, radius, spacing, typography } from '../theme';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('es-PE', {
@@ -60,87 +62,104 @@ export default function ModerationScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <FlatList
-      contentContainerStyle={styles.listContent}
-      data={claims}
-      keyExtractor={(item) => item.id}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true);
-            load();
-          }}
-        />
-      }
-      ListEmptyComponent={
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>No hay solicitudes pendientes.</Text>
+    <View style={styles.container}>
+      <View style={styles.tabBar}>
+        <View style={[styles.tab, styles.tabActive]}>
+          <Text style={styles.tabTextActive}>Solicitudes de dueño</Text>
         </View>
-      }
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Text style={styles.businessName}>{item.business.name}</Text>
-          <Text style={styles.meta}>
-            Solicitado por {item.user.username} · {formatDate(item.createdAt)}
-          </Text>
-          {item.message && <Text style={styles.message}>"{item.message}"</Text>}
-          <View style={styles.row}>
-            <TouchableOpacity
-              style={[styles.button, styles.rejectButton]}
-              onPress={() => handleReview(item.id, 'RECHAZADO')}
-              disabled={reviewingId === item.id}
-            >
-              <Text style={styles.rejectButtonText}>Rechazar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => handleReview(item.id, 'APROBADO')}
-              disabled={reviewingId === item.id}
-            >
-              {reviewingId === item.id ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.buttonText}>Aprobar</Text>
-              )}
-            </TouchableOpacity>
+      </View>
+      <FlatList
+        contentContainerStyle={styles.listContent}
+        data={claims}
+        keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              load();
+            }}
+            tintColor={colors.primary}
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.center}>
+            <Text style={styles.emptyText}>No hay solicitudes pendientes.</Text>
           </View>
-        </View>
-      )}
-    />
+        }
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="storefront-outline" size={18} color={colors.primary} />
+              <Text style={styles.businessName}>{item.business.name}</Text>
+            </View>
+            <Text style={styles.meta}>
+              Solicitado por {item.user.username} · {formatDate(item.createdAt)}
+            </Text>
+            {item.message && <Text style={styles.message}>"{item.message}"</Text>}
+            <View style={styles.row}>
+              <TouchableOpacity
+                style={[styles.button, styles.rejectButton]}
+                onPress={() => handleReview(item.id, 'RECHAZADO')}
+                disabled={reviewingId === item.id}
+              >
+                <Text style={styles.rejectButtonText}>Rechazar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => handleReview(item.id, 'APROBADO')}
+                disabled={reviewingId === item.id}
+              >
+                {reviewingId === item.id ? (
+                  <ActivityIndicator color={colors.onPrimary} size="small" />
+                ) : (
+                  <Text style={styles.buttonText}>Aprobar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: '#6b7280' },
-  listContent: { padding: 16 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
+  container: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xxl },
+  emptyText: { color: colors.textMuted },
+  tabBar: { flexDirection: 'row', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  tab: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
-  businessName: { fontSize: 16, fontWeight: '700' },
-  meta: { color: '#6b7280', fontSize: 12, marginTop: 4 },
-  message: { color: '#374151', marginTop: 8, fontStyle: 'italic' },
-  row: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  tabTextActive: { ...typography.caption, color: colors.onPrimary, fontWeight: '700' },
+  listContent: { padding: spacing.lg },
+  card: { ...card, marginBottom: spacing.md },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  businessName: { ...typography.h3 },
+  meta: { ...typography.caption, marginTop: spacing.xs },
+  message: { ...typography.bodyMuted, marginTop: spacing.sm, fontStyle: 'italic' },
+  row: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   button: {
     flex: 1,
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    paddingVertical: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
-  rejectButton: { backgroundColor: '#f3f4f6' },
-  rejectButtonText: { color: '#dc2626', fontWeight: '600' },
+  buttonText: { color: colors.onPrimary, fontWeight: '700' },
+  rejectButton: { backgroundColor: colors.surfaceAlt },
+  rejectButtonText: { color: colors.danger, fontWeight: '700' },
 });

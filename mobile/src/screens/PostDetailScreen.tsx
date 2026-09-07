@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchPost, markPostSold } from '../api/posts';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
@@ -23,10 +24,12 @@ import {
   ANIMAL_SEX_LABELS,
   ANIMAL_SPECIES_LABELS,
   CATEGORY_COLORS,
+  CATEGORY_ICONS,
   CATEGORY_LABELS,
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
 import { useAuth } from '../context/AuthContext';
+import { card, colors, radius, spacing, typography } from '../theme';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('es-PE', {
@@ -199,7 +202,7 @@ export default function PostDetailScreen({ route, navigation }: any) {
   if (loading || !post) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -228,9 +231,8 @@ export default function PostDetailScreen({ route, navigation }: any) {
         }
         ListHeaderComponent={
           <View>
-            <View
-              style={[styles.badge, { backgroundColor: CATEGORY_COLORS[post.category] }]}
-            >
+            <View style={[styles.badge, { backgroundColor: CATEGORY_COLORS[post.category] }]}>
+              <Ionicons name={CATEGORY_ICONS[post.category]} size={13} color={colors.onPrimary} />
               <Text style={styles.badgeText}>{CATEGORY_LABELS[post.category]}</Text>
             </View>
             <Text style={styles.title}>{post.title}</Text>
@@ -329,16 +331,17 @@ export default function PostDetailScreen({ route, navigation }: any) {
             )}
 
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
-                <Text style={styles.likeText}>
-                  {liked ? '❤️' : '🤍'} {likeCount}
-                </Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleToggleLike}>
+                <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? colors.danger : colors.text} />
+                <Text style={styles.actionText}>{likeCount}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleToggleSave}>
-                <Text style={styles.saveText}>{saved ? '🔖 Guardado' : '🏷️ Guardar'}</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleToggleSave}>
+                <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={16} color={saved ? colors.primary : colors.text} />
+                <Text style={styles.actionText}>{saved ? 'Guardado' : 'Guardar'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.directionsButton} onPress={handleGetDirections}>
-                <Text style={styles.directionsText}>🧭 Cómo llegar</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleGetDirections}>
+                <Ionicons name="navigate-outline" size={16} color={colors.text} />
+                <Text style={styles.actionText}>Cómo llegar</Text>
               </TouchableOpacity>
             </View>
 
@@ -348,13 +351,14 @@ export default function PostDetailScreen({ route, navigation }: any) {
         onEndReachedThreshold={0.4}
         onEndReached={loadMoreComments}
         ListFooterComponent={
-          loadingMoreComments ? <ActivityIndicator style={styles.footer} /> : null
+          loadingMoreComments ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : null
         }
       />
       <View style={[styles.inputBar, { paddingBottom: 10 + insets.bottom }]}>
         <TextInput
           style={styles.input}
           placeholder="Escribí un comentario..."
+          placeholderTextColor={colors.textFaint}
           value={commentText}
           onChangeText={setCommentText}
           multiline
@@ -365,9 +369,9 @@ export default function PostDetailScreen({ route, navigation }: any) {
           disabled={sending}
         >
           {sending ? (
-            <ActivityIndicator color="#fff" size="small" />
+            <ActivityIndicator color={colors.onPrimary} size="small" />
           ) : (
-            <Text style={styles.sendText}>Enviar</Text>
+            <Ionicons name="send" size={18} color={colors.onPrimary} />
           )}
         </TouchableOpacity>
       </View>
@@ -376,102 +380,92 @@ export default function PostDetailScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  listContent: { padding: 16, paddingBottom: 8 },
+  flex: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  listContent: { padding: spacing.lg, paddingBottom: spacing.sm },
   badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 10,
+    borderRadius: radius.pill,
+    marginBottom: spacing.sm,
   },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 6 },
-  description: { color: '#374151', fontSize: 15, marginBottom: 8 },
-  author: { color: '#2563eb', fontSize: 13, fontWeight: '600' },
-  date: { color: '#6b7280', fontSize: 12, marginTop: 2, marginBottom: 14 },
-  photoRow: { marginBottom: 14 },
-  photo: { width: 150, height: 110, borderRadius: 10, marginRight: 8 },
-  detailsBox: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 14,
-  },
-  detailsTitle: { fontWeight: '700', marginBottom: 6 },
-  detailsRow: { color: '#374151', marginBottom: 3 },
-  priceRow: { fontSize: 17, fontWeight: '700', color: '#0891b2', marginBottom: 4 },
+  badgeText: { color: colors.onPrimary, fontSize: 12, fontWeight: '700' },
+  title: { ...typography.h1, fontSize: 20, marginBottom: spacing.xs },
+  description: { ...typography.body, marginBottom: spacing.sm },
+  author: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+  date: { ...typography.caption, marginTop: 2, marginBottom: spacing.lg },
+  photoRow: { marginBottom: spacing.lg },
+  photo: { width: 150, height: 110, borderRadius: radius.md, marginRight: spacing.sm },
+  detailsBox: { ...card, marginBottom: spacing.lg },
+  detailsTitle: { ...typography.h3, marginBottom: spacing.sm },
+  detailsRow: { ...typography.bodyMuted, marginBottom: 3 },
+  priceRow: { fontSize: 17, fontWeight: '700', color: colors.primary, marginBottom: 4 },
   soldButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginTop: 8,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.sm,
   },
-  soldButtonText: { color: '#fff', fontWeight: '600' },
-  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
-  likeButton: {
+  soldButtonText: { color: colors.text, fontWeight: '600' },
+  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xl },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     alignSelf: 'flex-start',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  likeText: { fontSize: 15, fontWeight: '600' },
-  saveButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  saveText: { fontSize: 15, fontWeight: '600' },
-  directionsButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  directionsText: { fontSize: 15, fontWeight: '600' },
-  commentsTitle: { fontWeight: '700', fontSize: 15, marginBottom: 8 },
+  actionText: { color: colors.text, fontSize: 13, fontWeight: '600' },
+  commentsTitle: { ...typography.h3, marginBottom: spacing.sm },
   commentRow: {
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    paddingVertical: 10,
+    borderTopColor: colors.border,
+    paddingVertical: spacing.sm,
   },
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-  commentAuthor: { fontWeight: '600' },
-  commentTime: { color: '#9ca3af', fontSize: 11 },
-  commentContent: { marginTop: 4, color: '#111827' },
-  deleteLink: { color: '#dc2626', fontSize: 12, marginTop: 6 },
-  emptyText: { color: '#6b7280', paddingVertical: 16 },
-  footer: { marginVertical: 16 },
+  commentAuthor: { color: colors.text, fontWeight: '600' },
+  commentTime: { color: colors.textFaint, fontSize: 11 },
+  commentContent: { marginTop: 4, color: colors.textMuted },
+  deleteLink: { color: colors.danger, fontSize: 12, marginTop: 6 },
+  emptyText: { color: colors.textMuted, paddingVertical: spacing.lg },
+  footer: { marginVertical: spacing.lg },
   inputBar: {
     flexDirection: 'row',
-    padding: 10,
+    padding: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    backgroundColor: '#fff',
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'flex-end',
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     maxHeight: 100,
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   sendButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sendText: { color: '#fff', fontWeight: '600' },
 });

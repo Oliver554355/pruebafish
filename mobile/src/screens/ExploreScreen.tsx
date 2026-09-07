@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { BUSINESSES_PAGE_SIZE, fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness } from '../types';
-import { BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICONS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
+import { card, colors, radius, spacing, typography } from '../theme';
 
 function BusinessCard({
   business,
@@ -21,14 +23,27 @@ function BusinessCard({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.name}>{business.name}</Text>
-        {business.verified && <Text style={styles.verified}>✓ verificado</Text>}
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+      <View style={[styles.icon, { backgroundColor: BUSINESS_CATEGORY_COLORS[business.category] }]}>
+        <Ionicons name={BUSINESS_CATEGORY_ICONS[business.category]} size={22} color={colors.onPrimary} />
       </View>
-      <Text style={styles.category}>{BUSINESS_CATEGORY_LABELS[business.category]}</Text>
-      {business.address && <Text style={styles.address}>{business.address}</Text>}
-      <Text style={styles.meta}>{(business.distance / 1000).toFixed(1)} km</Text>
+      <View style={styles.cardBody}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.name} numberOfLines={1}>{business.name}</Text>
+          {business.verified && (
+            <View style={styles.verifiedBadge}>
+              <Ionicons name="checkmark-circle" size={13} color={colors.success} />
+              <Text style={styles.verified}>Verificado</Text>
+            </View>
+          )}
+        </View>
+        <Text style={styles.category}>{BUSINESS_CATEGORY_LABELS[business.category]}</Text>
+        {business.address && <Text style={styles.address} numberOfLines={1}>{business.address}</Text>}
+        <View style={styles.metaItem}>
+          <Ionicons name="location-outline" size={12} color={colors.textMuted} />
+          <Text style={styles.meta}>{(business.distance / 1000).toFixed(1)} km</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -53,7 +68,10 @@ export default function ExploreScreen({ navigation }: any) {
   }, [coords]);
 
   const loadMore = useCallback(async () => {
-    if (!coords || loadingMore || !hasMore) return;
+    // FlatList dispara onEndReached apenas monta si todavia no hay contenido
+    // (lista vacia = "ya llegue al final"), asi que se bloquea mientras la
+    // carga inicial (refreshing) esta en curso para no duplicar la pagina 1.
+    if (!coords || loadingMore || !hasMore || refreshing || businesses.length === 0) return;
     setLoadingMore(true);
     try {
       const page = await fetchNearbyBusinesses(
@@ -68,7 +86,7 @@ export default function ExploreScreen({ navigation }: any) {
     } finally {
       setLoadingMore(false);
     }
-  }, [coords, loadingMore, hasMore, businesses.length]);
+  }, [coords, loadingMore, hasMore, refreshing, businesses.length]);
 
   useEffect(() => {
     load();
@@ -77,7 +95,7 @@ export default function ExploreScreen({ navigation }: any) {
   if (loadingLocation) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -95,7 +113,7 @@ export default function ExploreScreen({ navigation }: any) {
           />
         )}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={load} />
+          <RefreshControl refreshing={refreshing} onRefresh={load} tintColor={colors.primary} />
         }
         ListEmptyComponent={
           <View style={styles.center}>
@@ -106,22 +124,23 @@ export default function ExploreScreen({ navigation }: any) {
         }
         onEndReachedThreshold={0.4}
         onEndReached={loadMore}
-        ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} /> : null}
+        ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : null}
       />
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('CreateBusiness')}
+        activeOpacity={0.85}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Ionicons name="add" size={28} color={colors.onPrimary} />
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  listContent: { padding: 16 },
+  flex: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xxl },
+  listContent: { padding: spacing.lg },
   fab: {
     position: 'absolute',
     right: 20,
@@ -129,30 +148,37 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
   },
-  fabText: { color: '#fff', fontSize: 28, fontWeight: '600', marginTop: -2 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+  card: { ...card, marginBottom: spacing.md, flexDirection: 'row', gap: spacing.md },
+  icon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  cardBody: { flex: 1 },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
   },
-  name: { fontSize: 16, fontWeight: '700' },
-  verified: { color: '#16a34a', fontSize: 12, fontWeight: '600' },
-  category: { color: '#2563eb', fontSize: 12, marginTop: 2 },
-  address: { color: '#374151', marginTop: 6 },
-  meta: { color: '#6b7280', fontSize: 12, marginTop: 8 },
-  emptyText: { color: '#6b7280' },
-  footer: { marginVertical: 16 },
+  name: { ...typography.h3, flex: 1 },
+  verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  verified: { color: colors.success, fontSize: 11, fontWeight: '700' },
+  category: { color: colors.primary, fontSize: 12, fontWeight: '600', marginTop: 2 },
+  address: { ...typography.bodyMuted, marginTop: spacing.xs },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.sm },
+  meta: { ...typography.caption },
+  emptyText: { color: colors.textMuted },
+  footer: { marginVertical: spacing.lg },
 });

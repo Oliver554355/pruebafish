@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createPost } from '../api/posts';
 import {
   AnimalSex,
@@ -20,10 +21,12 @@ import {
   ANIMAL_SEX_LABELS,
   ANIMAL_SPECIES_LABELS,
   CATEGORY_COLORS,
+  CATEGORY_ICONS,
   CATEGORY_LABELS,
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
+import { colors, radius, spacing, typography } from '../theme';
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PostCategory[];
 const ANIMAL_CATEGORIES: PostCategory[] = ['ANIMAL_PERDIDO', 'ANIMAL_ENCONTRADO', 'ADOPCION'];
@@ -37,7 +40,7 @@ function todayISODate() {
 
 export default function PublishScreen({ navigation }: any) {
   const { coords } = useCurrentLocation();
-  const [category, setCategory] = useState<PostCategory>('ACCIDENTE');
+  const [category, setCategory] = useState<PostCategory | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -61,11 +64,12 @@ export default function PublishScreen({ navigation }: any) {
   const [price, setPrice] = useState('');
   const [condition, setCondition] = useState<SaleCondition | undefined>(undefined);
 
-  const isAnimal = ANIMAL_CATEGORIES.includes(category);
+  const isAnimal = category ? ANIMAL_CATEGORIES.includes(category) : false;
   const isEvent = category === 'EVENTO';
   const isSale = category === 'VENTA';
 
   async function handleSubmit() {
+    if (!category) return;
     if (!coords) {
       Alert.alert('Ubicación no disponible', 'Esperá a que se detecte tu ubicación.');
       return;
@@ -138,6 +142,7 @@ export default function PublishScreen({ navigation }: any) {
       setOrganizerName('');
       setPrice('');
       setCondition(undefined);
+      setCategory(null);
       Alert.alert('Listo', 'Tu publicación se creó correctamente.');
       navigation.navigate('Comunidad');
     } catch (err: any) {
@@ -150,38 +155,48 @@ export default function PublishScreen({ navigation }: any) {
     }
   }
 
+  // Paso 1: grid de categorias (equivalente al "¿Que quieres publicar?" del
+  // mockup). Al elegir una se pasa al formulario especifico de esa categoria.
+  if (!category) {
+    return (
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.stepTitle}>¿Qué querés publicar?</Text>
+        <Text style={styles.stepSubtitle}>Elegí una categoría para empezar</Text>
+        <View style={styles.grid}>
+          {ALL_CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={styles.gridCell}
+              onPress={() => setCategory(cat)}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.gridIcon, { backgroundColor: CATEGORY_COLORS[cat] }]}>
+                <Ionicons name={CATEGORY_ICONS[cat]} size={24} color={colors.onPrimary} />
+              </View>
+              <Text style={styles.gridLabel}>{CATEGORY_LABELS[cat]}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.label}>Categoría</Text>
-      <View style={styles.chips}>
-        {ALL_CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            onPress={() => setCategory(cat)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor:
-                  category === cat ? CATEGORY_COLORS[cat] : '#f3f4f6',
-              },
-            ]}
-          >
-            <Text
-              style={{
-                color: category === cat ? '#fff' : '#374151',
-                fontWeight: '600',
-              }}
-            >
-              {CATEGORY_LABELS[cat]}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <TouchableOpacity style={styles.selectedCategoryRow} onPress={() => setCategory(null)}>
+        <View style={[styles.selectedIcon, { backgroundColor: CATEGORY_COLORS[category] }]}>
+          <Ionicons name={CATEGORY_ICONS[category]} size={20} color={colors.onPrimary} />
+        </View>
+        <Text style={styles.selectedLabel}>{CATEGORY_LABELS[category]}</Text>
+        <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+        <Text style={styles.changeLabel}>Cambiar</Text>
+      </TouchableOpacity>
 
       <Text style={styles.label}>Título</Text>
       <TextInput
         style={styles.input}
         placeholder="¿Qué está pasando?"
+        placeholderTextColor={colors.textFaint}
         value={title}
         onChangeText={setTitle}
       />
@@ -190,6 +205,7 @@ export default function PublishScreen({ navigation }: any) {
       <TextInput
         style={[styles.input, styles.textarea]}
         placeholder="Agregá más detalles..."
+        placeholderTextColor={colors.textFaint}
         value={description}
         onChangeText={setDescription}
         multiline
@@ -205,12 +221,9 @@ export default function PublishScreen({ navigation }: any) {
               <TouchableOpacity
                 key={s}
                 onPress={() => setSpecies(s)}
-                style={[
-                  styles.chip,
-                  { backgroundColor: species === s ? '#7c3aed' : '#f3f4f6' },
-                ]}
+                style={[styles.chip, species === s && styles.chipActive]}
               >
-                <Text style={{ color: species === s ? '#fff' : '#374151', fontWeight: '600' }}>
+                <Text style={[styles.chipText, species === s && styles.chipTextActive]}>
                   {ANIMAL_SPECIES_LABELS[s]}
                 </Text>
               </TouchableOpacity>
@@ -218,15 +231,16 @@ export default function PublishScreen({ navigation }: any) {
           </View>
 
           <Text style={styles.label}>Nombre (opcional)</Text>
-          <TextInput style={styles.input} value={petName} onChangeText={setPetName} />
+          <TextInput style={styles.input} placeholderTextColor={colors.textFaint} value={petName} onChangeText={setPetName} />
 
           <Text style={styles.label}>Color (opcional)</Text>
-          <TextInput style={styles.input} value={color} onChangeText={setColor} />
+          <TextInput style={styles.input} placeholderTextColor={colors.textFaint} value={color} onChangeText={setColor} />
 
           <Text style={styles.label}>Características (opcional)</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
             placeholder="Tamaño, collar, manchas..."
+            placeholderTextColor={colors.textFaint}
             value={characteristics}
             onChangeText={setCharacteristics}
             multiline
@@ -238,12 +252,9 @@ export default function PublishScreen({ navigation }: any) {
               <TouchableOpacity
                 key={s}
                 onPress={() => setSex(sex === s ? undefined : s)}
-                style={[
-                  styles.chip,
-                  { backgroundColor: sex === s ? '#7c3aed' : '#f3f4f6' },
-                ]}
+                style={[styles.chip, sex === s && styles.chipActive]}
               >
-                <Text style={{ color: sex === s ? '#fff' : '#374151', fontWeight: '600' }}>
+                <Text style={[styles.chipText, sex === s && styles.chipTextActive]}>
                   {ANIMAL_SEX_LABELS[s]}
                 </Text>
               </TouchableOpacity>
@@ -253,6 +264,7 @@ export default function PublishScreen({ navigation }: any) {
           <Text style={styles.label}>Edad aproximada en años (opcional)</Text>
           <TextInput
             style={styles.input}
+            placeholderTextColor={colors.textFaint}
             value={approxAgeYears}
             onChangeText={setApproxAgeYears}
             keyboardType="decimal-pad"
@@ -264,6 +276,7 @@ export default function PublishScreen({ navigation }: any) {
               <TextInput
                 style={[styles.input, styles.textarea]}
                 placeholder="Ej: casa con patio, esterilizar, visitar antes..."
+                placeholderTextColor={colors.textFaint}
                 value={adoptionConditions}
                 onChangeText={setAdoptionConditions}
                 multiline
@@ -274,6 +287,7 @@ export default function PublishScreen({ navigation }: any) {
           <Text style={styles.label}>Teléfono de contacto (opcional)</Text>
           <TextInput
             style={styles.input}
+            placeholderTextColor={colors.textFaint}
             value={contactPhone}
             onChangeText={setContactPhone}
             keyboardType="phone-pad"
@@ -286,18 +300,19 @@ export default function PublishScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>Datos del evento</Text>
 
           <Text style={styles.label}>Fecha (AAAA-MM-DD)</Text>
-          <TextInput style={styles.input} value={eventDate} onChangeText={setEventDate} />
+          <TextInput style={styles.input} placeholderTextColor={colors.textFaint} value={eventDate} onChangeText={setEventDate} />
 
           <Text style={styles.label}>Hora (HH:MM)</Text>
           <TextInput
             style={styles.input}
             placeholder="19:00"
+            placeholderTextColor={colors.textFaint}
             value={eventTime}
             onChangeText={setEventTime}
           />
 
           <Text style={styles.label}>Organizador (opcional)</Text>
-          <TextInput style={styles.input} value={organizerName} onChangeText={setOrganizerName} />
+          <TextInput style={styles.input} placeholderTextColor={colors.textFaint} value={organizerName} onChangeText={setOrganizerName} />
         </View>
       )}
 
@@ -308,6 +323,7 @@ export default function PublishScreen({ navigation }: any) {
           <Text style={styles.label}>Precio (S/)</Text>
           <TextInput
             style={styles.input}
+            placeholderTextColor={colors.textFaint}
             value={price}
             onChangeText={setPrice}
             keyboardType="decimal-pad"
@@ -319,12 +335,9 @@ export default function PublishScreen({ navigation }: any) {
               <TouchableOpacity
                 key={c}
                 onPress={() => setCondition(condition === c ? undefined : c)}
-                style={[
-                  styles.chip,
-                  { backgroundColor: condition === c ? '#0891b2' : '#f3f4f6' },
-                ]}
+                style={[styles.chip, condition === c && styles.chipActive]}
               >
-                <Text style={{ color: condition === c ? '#fff' : '#374151', fontWeight: '600' }}>
+                <Text style={[styles.chipText, condition === c && styles.chipTextActive]}>
                   {SALE_CONDITION_LABELS[c]}
                 </Text>
               </TouchableOpacity>
@@ -343,7 +356,7 @@ export default function PublishScreen({ navigation }: any) {
         disabled={submitting}
       >
         {submitting ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
           <Text style={styles.buttonText}>Publicar</Text>
         )}
@@ -353,31 +366,86 @@ export default function PublishScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48 },
-  label: { fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  container: { padding: spacing.lg, paddingBottom: 48, backgroundColor: colors.bg, flexGrow: 1 },
+  stepTitle: { ...typography.h1, marginTop: spacing.md },
+  stepSubtitle: { ...typography.bodyMuted, marginTop: spacing.xs, marginBottom: spacing.xl },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, justifyContent: 'space-between' },
+  gridCell: {
+    width: '31%',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  gridIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  gridLabel: { ...typography.caption, color: colors.text, textAlign: 'center', fontWeight: '600' },
+  selectedCategoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  selectedIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedLabel: { ...typography.h3, flex: 1 },
+  changeLabel: { ...typography.caption, color: colors.primary, fontWeight: '700' },
+  label: { ...typography.h3, fontSize: 13, marginTop: spacing.lg, marginBottom: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { ...typography.caption, fontWeight: '600' },
+  chipTextActive: { color: colors.onPrimary },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    color: colors.text,
+    fontSize: 14,
   },
   textarea: { height: 90, textAlignVertical: 'top' },
-  hint: { color: '#6b7280', fontSize: 12, marginTop: 12 },
+  hint: { ...typography.caption, marginTop: spacing.md },
   section: {
-    marginTop: 20,
-    paddingTop: 16,
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: colors.border,
   },
-  sectionTitle: { fontWeight: '700', fontSize: 15, marginBottom: 4 },
+  sectionTitle: { ...typography.h3 },
   button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    padding: 14,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    padding: 15,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: spacing.xl,
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
+  buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 15 },
 });

@@ -1,20 +1,37 @@
+import type { ComponentProps } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { AnimalSex, AnimalSpecies, BusinessCategory, PostCategory, SaleCondition } from './types';
 
+type IoniconName = ComponentProps<typeof Ionicons>['name'];
+
 // Colores por categoria (brief seccion 4.1: "los marcadores deben poder
-// diferenciarse visualmente segun su categoria"). Sin diseño definido
-// todavia — esta paleta es provisoria, para distinguir categorias en el
-// mapa/feed, no una decision de marca.
+// diferenciarse visualmente segun su categoria"), afinados para el tema
+// oscuro (ver theme.ts): saturados para que hagan "pop" sobre el fondo
+// #0B1220 en vez de verse apagados.
 export const CATEGORY_COLORS: Record<PostCategory, string> = {
-  ACCIDENTE: '#dc2626',
-  INCIDENTE: '#ea580c',
-  ANIMAL_PERDIDO: '#7c3aed',
-  ANIMAL_ENCONTRADO: '#9333ea',
-  ADOPCION: '#c026d3',
-  RECOMENDACION: '#16a34a',
-  EVENTO: '#2563eb',
-  AVISO: '#ca8a04',
-  VENTA: '#0891b2',
-  OTRO: '#6b7280',
+  ACCIDENTE: '#EF4444',
+  INCIDENTE: '#F97316',
+  ANIMAL_PERDIDO: '#A855F7',
+  ANIMAL_ENCONTRADO: '#C026D3',
+  ADOPCION: '#EC4899',
+  RECOMENDACION: '#22C55E',
+  EVENTO: '#3B82F6',
+  AVISO: '#EAB308',
+  VENTA: '#06B6D4',
+  OTRO: '#64748B',
+};
+
+export const CATEGORY_ICONS: Record<PostCategory, IoniconName> = {
+  ACCIDENTE: 'car-sport',
+  INCIDENTE: 'alert-circle',
+  ANIMAL_PERDIDO: 'paw',
+  ANIMAL_ENCONTRADO: 'paw',
+  ADOPCION: 'heart',
+  RECOMENDACION: 'star',
+  EVENTO: 'calendar',
+  AVISO: 'megaphone',
+  VENTA: 'pricetag',
+  OTRO: 'ellipsis-horizontal',
 };
 
 export const CATEGORY_LABELS: Record<PostCategory, string> = {
@@ -60,4 +77,32 @@ export const BUSINESS_CATEGORY_LABELS: Record<BusinessCategory, string> = {
   BANCO_CAJERO: 'Banco / Cajero',
   PARADA: 'Parada',
   OTRO: 'Otro',
+};
+
+export const BUSINESS_CATEGORY_COLORS: Record<BusinessCategory, string> = {
+  RESTAURANTE: '#F97316',
+  TIENDA: '#3B82F6',
+  HOSTAL: '#8B5CF6',
+  PARQUE: '#22C55E',
+  TURISMO: '#06B6D4',
+  FARMACIA: '#EF4444',
+  SALUD: '#EC4899',
+  EDUCACION: '#EAB308',
+  BANCO_CAJERO: '#14B8A6',
+  PARADA: '#64748B',
+  OTRO: '#64748B',
+};
+
+export const BUSINESS_CATEGORY_ICONS: Record<BusinessCategory, IoniconName> = {
+  RESTAURANTE: 'restaurant',
+  TIENDA: 'storefront',
+  HOSTAL: 'bed',
+  PARQUE: 'leaf',
+  TURISMO: 'camera',
+  FARMACIA: 'medkit',
+  SALUD: 'medical',
+  EDUCACION: 'school',
+  BANCO_CAJERO: 'cash',
+  PARADA: 'bus',
+  OTRO: 'ellipsis-horizontal',
 };

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { search } from '../api/search';
 import { SearchResults } from '../types';
 import {
@@ -15,6 +16,7 @@ import {
   CATEGORY_COLORS,
   CATEGORY_LABELS,
 } from '../categoryStyle';
+import { colors, radius, spacing, typography } from '../theme';
 
 const DEBOUNCE_MS = 400;
 
@@ -63,16 +65,20 @@ export default function SearchScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Buscar points, publicaciones, usuarios..."
-        value={query}
-        onChangeText={setQuery}
-        autoFocus
-        autoCapitalize="none"
-      />
+      <View style={styles.inputRow}>
+        <Ionicons name="search" size={18} color={colors.textMuted} style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Buscar points, publicaciones, usuarios..."
+          placeholderTextColor={colors.textFaint}
+          value={query}
+          onChangeText={setQuery}
+          autoFocus
+          autoCapitalize="none"
+        />
+      </View>
 
-      {loading && <ActivityIndicator style={styles.loading} />}
+      {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
 
       <ScrollView contentContainerStyle={styles.results} keyboardShouldPersistTaps="handled">
         {hasCategoryMatches && (
@@ -101,6 +107,7 @@ export default function SearchScreen({ navigation }: any) {
                 key={b.id}
                 style={styles.row}
                 onPress={() => navigation.navigate('BusinessDetail', { businessId: b.id })}
+                activeOpacity={0.85}
               >
                 <Text style={styles.rowTitle}>{b.name}</Text>
                 <Text style={styles.rowMeta}>
@@ -121,6 +128,7 @@ export default function SearchScreen({ navigation }: any) {
                 key={p.id}
                 style={styles.row}
                 onPress={() => navigation.navigate('PostDetail', { postId: p.id })}
+                activeOpacity={0.85}
               >
                 <Text style={styles.rowTitle}>{p.title}</Text>
                 <Text style={styles.rowMeta}>{CATEGORY_LABELS[p.category]}</Text>
@@ -137,6 +145,7 @@ export default function SearchScreen({ navigation }: any) {
                 key={u.id}
                 style={styles.row}
                 onPress={() => navigation.navigate('UserProfile', { userId: u.id })}
+                activeOpacity={0.85}
               >
                 <Text style={styles.rowTitle}>{u.username}</Text>
               </TouchableOpacity>
@@ -153,32 +162,36 @@ export default function SearchScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  input: {
-    margin: 16,
+  container: { flex: 1, backgroundColor: colors.bg },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: spacing.lg,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
   },
-  loading: { marginBottom: 8 },
-  results: { paddingHorizontal: 16, paddingBottom: 32 },
-  section: { marginBottom: 20 },
-  sectionTitle: { fontWeight: '700', fontSize: 15, marginBottom: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  businessChip: { backgroundColor: '#2563eb' },
-  chipText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  inputIcon: { marginRight: spacing.sm },
+  input: { flex: 1, paddingVertical: 12, color: colors.text, fontSize: 15 },
+  loading: { marginBottom: spacing.sm },
+  results: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
+  section: { marginBottom: spacing.xl },
+  sectionTitle: { ...typography.h3, marginBottom: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill },
+  businessChip: { backgroundColor: colors.primary },
+  chipText: { color: colors.onPrimary, fontWeight: '600', fontSize: 12 },
   row: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
-  rowTitle: { fontWeight: '600', fontSize: 15 },
-  rowMeta: { color: '#6b7280', fontSize: 12, marginTop: 4 },
-  emptyText: { color: '#6b7280', textAlign: 'center', marginTop: 24 },
+  rowTitle: { color: colors.text, fontWeight: '600', fontSize: 15 },
+  rowMeta: { ...typography.caption, marginTop: 4 },
+  emptyText: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
 });

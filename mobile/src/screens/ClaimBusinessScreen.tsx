@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { createBusinessClaim } from '../api/businessClaims';
+import { colors, radius, spacing, typography } from '../theme';
 
 export default function ClaimBusinessScreen({ route, navigation }: any) {
   const { businessId, businessName } = route.params as {
@@ -47,13 +48,14 @@ export default function ClaimBusinessScreen({ route, navigation }: any) {
       <TextInput
         style={[styles.input, styles.textarea]}
         placeholder="Ej: Soy el dueño, mi teléfono ya está listado en la ficha"
+        placeholderTextColor={colors.textFaint}
         value={message}
         onChangeText={setMessage}
         multiline
       />
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>
         {submitting ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
           <Text style={styles.buttonText}>Enviar solicitud</Text>
         )}
@@ -63,17 +65,24 @@ export default function ClaimBusinessScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24 },
-  title: { fontSize: 18, fontWeight: '700', marginBottom: 10 },
-  description: { color: '#6b7280', marginBottom: 20 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12 },
+  container: { flex: 1, padding: spacing.xl, backgroundColor: colors.bg },
+  title: { ...typography.h2, marginBottom: spacing.sm },
+  description: { ...typography.bodyMuted, marginBottom: spacing.xl },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    color: colors.text,
+  },
   textarea: { height: 100, textAlignVertical: 'top' },
   button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    padding: 14,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    padding: 15,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: spacing.xl,
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
+  buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 15 },
 });

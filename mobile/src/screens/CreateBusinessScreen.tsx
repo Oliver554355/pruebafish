@@ -9,10 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createBusiness } from '../api/businesses';
 import { BusinessCategory } from '../types';
-import { BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICONS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
+import { colors, radius, spacing, typography } from '../theme';
 
 const CATEGORIES = Object.keys(BUSINESS_CATEGORY_LABELS) as BusinessCategory[];
 
@@ -63,26 +65,28 @@ export default function CreateBusinessScreen({ navigation }: any) {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.label}>Categoría</Text>
       <View style={styles.chips}>
-        {CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            onPress={() => setCategory(cat)}
-            style={[
-              styles.chip,
-              { backgroundColor: category === cat ? '#2563eb' : '#f3f4f6' },
-            ]}
-          >
-            <Text style={{ color: category === cat ? '#fff' : '#374151', fontWeight: '600' }}>
-              {BUSINESS_CATEGORY_LABELS[cat]}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const active = category === cat;
+          return (
+            <TouchableOpacity
+              key={cat}
+              onPress={() => setCategory(cat)}
+              style={[styles.chip, active && { backgroundColor: BUSINESS_CATEGORY_COLORS[cat], borderColor: BUSINESS_CATEGORY_COLORS[cat] }]}
+            >
+              <Ionicons name={BUSINESS_CATEGORY_ICONS[cat]} size={13} color={active ? colors.onPrimary : colors.textMuted} />
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                {BUSINESS_CATEGORY_LABELS[cat]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <Text style={styles.label}>Nombre</Text>
       <TextInput
         style={styles.input}
         placeholder="Nombre del point"
+        placeholderTextColor={colors.textFaint}
         value={name}
         onChangeText={setName}
       />
@@ -91,6 +95,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
       <TextInput
         style={[styles.input, styles.textarea]}
         placeholder="¿Qué ofrece este lugar?"
+        placeholderTextColor={colors.textFaint}
         value={description}
         onChangeText={setDescription}
         multiline
@@ -100,6 +105,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
       <TextInput
         style={styles.input}
         placeholder="Calle y número"
+        placeholderTextColor={colors.textFaint}
         value={address}
         onChangeText={setAddress}
       />
@@ -108,6 +114,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
       <TextInput
         style={styles.input}
         placeholder="999 999 999"
+        placeholderTextColor={colors.textFaint}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
@@ -117,6 +124,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
       <TextInput
         style={styles.input}
         placeholder="Lun a sáb 9am-8pm"
+        placeholderTextColor={colors.textFaint}
         value={hours}
         onChangeText={setHours}
       />
@@ -127,7 +135,7 @@ export default function CreateBusinessScreen({ navigation }: any) {
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>
         {submitting ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
           <Text style={styles.buttonText}>Crear point</Text>
         )}
@@ -137,20 +145,39 @@ export default function CreateBusinessScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  label: { fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12 },
-  textarea: { height: 80, textAlignVertical: 'top' },
-  hint: { color: '#6b7280', fontSize: 12, marginTop: 12 },
-  button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    padding: 14,
+  container: { padding: spacing.lg, backgroundColor: colors.bg, flexGrow: 1 },
+  label: { ...typography.h3, fontSize: 13, marginTop: spacing.lg, marginBottom: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 32,
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
+  chipText: { ...typography.caption, fontWeight: '600' },
+  chipTextActive: { color: colors.onPrimary },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    color: colors.text,
+  },
+  textarea: { height: 80, textAlignVertical: 'top' },
+  hint: { ...typography.caption, marginTop: spacing.md },
+  button: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.xxl,
+  },
+  buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 15 },
 });
