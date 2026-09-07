@@ -217,6 +217,7 @@ model Business {
   reactions   Reaction[]
   reports     Report[]
   photos      Photo[]
+  products    Product[]
   savedBy     SavedItem[]
   hidden      Boolean          @default(false)
   createdAt   DateTime         @default(now())
@@ -342,10 +343,10 @@ model Report {
   @@index([commentId])
 }
 
-// Foto generica: exactamente uno de postId/businessId (validado en el
-// servicio, mismo patron que Comment/Reaction/Report). El archivo en si NO
-// vive en Postgres — "url" apunta a un bucket S3-compatible (AWS real o
-// self-hosted como MinIO, ver StorageService); aca solo se guarda el
+// Foto generica: exactamente uno de postId/businessId/productId (validado
+// en el servicio, mismo patron que Comment/Reaction/Report). El archivo en
+// si NO vive en Postgres — "url" apunta a un bucket S3-compatible (AWS real
+// o self-hosted como MinIO, ver StorageService); aca solo se guarda el
 // metadato. Ver ROADMAP.md para la config de storage.
 model Photo {
   id           String    @id @default(uuid())
@@ -354,11 +355,33 @@ model Photo {
   post         Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
   businessId   String?
   business     Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  productId    String?
+  product      Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
   uploadedById String
   uploadedBy   User      @relation(fields: [uploadedById], references: [id])
   createdAt    DateTime  @default(now())
 
   @@index([postId])
+  @@index([businessId])
+  @@index([productId])
+}
+
+// Menu/productos de un negocio (panel del dueño verificado): el brief
+// solo pide "el dueño podra poner su menu o productos que vende adentro
+// de su panel", asi que esto es deliberadamente simple — nombre, precio
+// opcional y fotos propias via Photo.productId. Solo existe colgado de un
+// Business, no tiene sentido standalone.
+model Product {
+  id          String   @id @default(uuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Decimal? @db.Decimal(10, 2)
+  photos      Photo[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@index([businessId])
 }
 

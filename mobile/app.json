@@ -38,6 +38,12 @@
         {
           "locationWhenInUsePermission": "Usamos tu ubicación para mostrarte qué está pasando cerca de vos en el mapa y el feed."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Usamos tus fotos para que subas imágenes de tu negocio y tus productos."
+        }
       ]
     ]
   }

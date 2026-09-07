@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchPublicProfile, updateProfile } from '../api/users';
 import { PublicProfile } from '../types';
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }: any) {
   const { user, logout, refreshUser } = useAuth();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [editing, setEditing] = useState(false);
@@ -106,6 +106,15 @@ export default function ProfileScreen() {
         <ActivityIndicator style={styles.stats} />
       )}
 
+      {user.isModerator && (
+        <TouchableOpacity
+          style={styles.moderationButton}
+          onPress={() => navigation.navigate('Moderation')}
+        >
+          <Text style={styles.moderationButtonText}>Moderación</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
       </TouchableOpacity>
@@ -157,6 +166,15 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontWeight: '600' },
   cancelButton: { backgroundColor: '#f3f4f6' },
   cancelButtonText: { color: '#374151', fontWeight: '600' },
+  moderationButton: {
+    borderWidth: 1,
+    borderColor: '#111827',
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  moderationButtonText: { color: '#111827', fontWeight: '600' },
   logoutButton: {
     borderWidth: 1,
     borderColor: '#dc2626',

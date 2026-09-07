@@ -79,6 +79,41 @@ export interface FeedPost extends NearbyPost {
   score: number;
 }
 
+export interface Photo {
+  id: string;
+  url: string;
+  postId: string | null;
+  businessId: string | null;
+  productId: string | null;
+  uploadedById: string;
+  createdAt: string;
+}
+
+export interface Product {
+  id: string;
+  businessId: string;
+  name: string;
+  description: string | null;
+  price: string | null;
+  photos: Photo[];
+  createdAt: string;
+}
+
+export type BusinessClaimStatus = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+
+export interface BusinessClaim {
+  id: string;
+  businessId: string;
+  userId: string;
+  message: string | null;
+  status: BusinessClaimStatus;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  user: { id: string; username: string };
+  business: { id: string; name: string };
+}
+
 export interface BusinessDetail {
   id: string;
   category: BusinessCategory;
@@ -93,6 +128,7 @@ export interface BusinessDetail {
   ownerId: string | null;
   verified: boolean;
   createdAt: string;
+  photos: Photo[];
   rating: { average: number | null; count: number };
 }
 

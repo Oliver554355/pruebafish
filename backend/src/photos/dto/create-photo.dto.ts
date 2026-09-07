@@ -10,4 +10,8 @@ export class CreatePhotoDto {
   @IsOptional()
   @IsUUID()
   businessId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  productId?: string;
 }

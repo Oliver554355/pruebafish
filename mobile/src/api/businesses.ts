@@ -33,3 +33,12 @@ export async function createBusiness(input: CreateBusinessInput) {
   const { data } = await api.post('/businesses', input);
   return data;
 }
+
+export type UpdateBusinessInput = Partial<
+  Omit<CreateBusinessInput, 'category' | 'lat' | 'lng'>
+>;
+
+export async function updateBusiness(id: string, input: UpdateBusinessInput) {
+  const { data } = await api.patch(`/businesses/${id}`, input);
+  return data;
+}

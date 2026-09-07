@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Business } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from './storage.service';
 import { CreatePhotoDto } from './dto/create-photo.dto';
@@ -17,6 +18,14 @@ export class PhotosService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
   ) {}
+
+  // Mismo criterio que BusinessesService.update: si ya tiene dueño
+  // verificado, solo ese dueño edita; si no, quien lo creo.
+  private canEditBusiness(business: Business, userId: string) {
+    return business.ownerId
+      ? business.ownerId === userId
+      : business.createdById === userId;
+  }
 
   async create(
     userId: string,
@@ -34,9 +43,12 @@ export class PhotosService {
     if (file.size > MAX_SIZE_BYTES) {
       throw new BadRequestException('La imagen no puede superar los 5MB');
     }
-    if (!!dto.postId === !!dto.businessId) {
+    const targetCount = [dto.postId, dto.businessId, dto.productId].filter(
+      Boolean,
+    ).length;
+    if (targetCount !== 1) {
       throw new BadRequestException(
-        'Debe indicar exactamente uno de postId o businessId',
+        'Debe indicar exactamente uno de postId, businessId o productId',
       );
     }
 
@@ -53,14 +65,25 @@ export class PhotosService {
           'Solo el autor del post puede agregarle fotos',
         );
       }
-    } else {
+    } else if (dto.businessId) {
       const business = await this.prisma.business.findUnique({
         where: { id: dto.businessId },
       });
       if (!business) throw new NotFoundException('Negocio no encontrado');
-      if (business.createdById !== userId) {
+      if (!this.canEditBusiness(business, userId)) {
         throw new ForbiddenException(
-          'Solo quien creó el negocio puede agregarle fotos',
+          'No podés agregarle fotos a este negocio',
+        );
+      }
+    } else {
+      const product = await this.prisma.product.findUnique({
+        where: { id: dto.productId },
+        include: { business: true },
+      });
+      if (!product) throw new NotFoundException('Producto no encontrado');
+      if (!this.canEditBusiness(product.business, userId)) {
+        throw new ForbiddenException(
+          'No podés agregarle fotos a este producto',
         );
       }
     }
@@ -71,6 +94,7 @@ export class PhotosService {
         url,
         postId: dto.postId,
         businessId: dto.businessId,
+        productId: dto.productId,
         uploadedById: userId,
       },
     });

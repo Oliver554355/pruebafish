@@ -7,6 +7,9 @@ import TabNavigator from './TabNavigator';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import BusinessDetailScreen from '../screens/BusinessDetailScreen';
 import CreateBusinessScreen from '../screens/CreateBusinessScreen';
+import BusinessPanelScreen from '../screens/BusinessPanelScreen';
+import ClaimBusinessScreen from '../screens/ClaimBusinessScreen';
+import ModerationScreen from '../screens/ModerationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +42,21 @@ export default function RootNavigator() {
         name="CreateBusiness"
         component={CreateBusinessScreen}
         options={{ headerShown: true, title: 'Agregar negocio' }}
+      />
+      <Stack.Screen
+        name="BusinessPanel"
+        component={BusinessPanelScreen}
+        options={{ headerShown: true, title: 'Panel del negocio' }}
+      />
+      <Stack.Screen
+        name="ClaimBusiness"
+        component={ClaimBusinessScreen}
+        options={{ headerShown: true, title: 'Reclamar negocio' }}
+      />
+      <Stack.Screen
+        name="Moderation"
+        component={ModerationScreen}
+        options={{ headerShown: true, title: 'Moderación' }}
       />
     </Stack.Navigator>
   );

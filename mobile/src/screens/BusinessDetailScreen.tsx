@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -14,7 +15,8 @@ import {
 import { fetchBusiness } from '../api/businesses';
 import { fetchComments, createComment, deleteComment } from '../api/comments';
 import { fetchReactionSummary, toggleReaction } from '../api/reactions';
-import { BusinessDetail, Comment } from '../types';
+import { fetchProducts } from '../api/products';
+import { BusinessDetail, Comment, Product } from '../types';
 import { BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useAuth } from '../context/AuthContext';
 
@@ -69,11 +71,12 @@ function ReviewRow({
   );
 }
 
-export default function BusinessDetailScreen({ route }: any) {
+export default function BusinessDetailScreen({ route, navigation }: any) {
   const { businessId } = route.params as { businessId: string };
   const { user } = useAuth();
 
   const [business, setBusiness] = useState<BusinessDetail | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -85,12 +88,14 @@ export default function BusinessDetailScreen({ route }: any) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [businessData, commentsData, summary] = await Promise.all([
+      const [businessData, productsData, commentsData, summary] = await Promise.all([
         fetchBusiness(businessId),
+        fetchProducts(businessId),
         fetchComments({ businessId }),
         fetchReactionSummary({ businessId }),
       ]);
       setBusiness(businessData);
+      setProducts(productsData);
       setComments(commentsData);
       setLikeCount(summary.find((s) => s.type === 'LIKE')?.count ?? 0);
     } catch (err) {
@@ -201,6 +206,18 @@ export default function BusinessDetailScreen({ route }: any) {
             {business.phone && <Text style={styles.meta}>📞 {business.phone}</Text>}
             {business.hours && <Text style={styles.meta}>🕒 {business.hours}</Text>}
 
+            {business.photos.length > 0 && (
+              <FlatList
+                horizontal
+                style={styles.photoRow}
+                data={business.photos}
+                keyExtractor={(p) => p.id}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item.url }} style={styles.photo} />
+                )}
+              />
+            )}
+
             <View style={styles.ratingRow}>
               {business.rating.average != null ? (
                 <>
@@ -217,6 +234,52 @@ export default function BusinessDetailScreen({ route }: any) {
             <TouchableOpacity style={styles.likeButton} onPress={handleToggleLike}>
               <Text style={styles.likeText}>{liked ? '❤️' : '🤍'} {likeCount}</Text>
             </TouchableOpacity>
+
+            {user && business.ownerId === user.id ? (
+              <TouchableOpacity
+                style={styles.ownerButton}
+                onPress={() => navigation.navigate('BusinessPanel', { businessId })}
+              >
+                <Text style={styles.ownerButtonText}>Panel del negocio</Text>
+              </TouchableOpacity>
+            ) : (
+              user &&
+              !business.verified && (
+                <TouchableOpacity
+                  style={styles.claimButton}
+                  onPress={() =>
+                    navigation.navigate('ClaimBusiness', {
+                      businessId,
+                      businessName: business.name,
+                    })
+                  }
+                >
+                  <Text style={styles.claimButtonText}>Reclamar este negocio</Text>
+                </TouchableOpacity>
+              )
+            )}
+
+            {products.length > 0 && (
+              <>
+                <Text style={styles.commentsTitle}>Menú / Productos</Text>
+                {products.map((product) => (
+                  <View key={product.id} style={styles.productRow}>
+                    {product.photos[0] && (
+                      <Image source={{ uri: product.photos[0].url }} style={styles.productPhoto} />
+                    )}
+                    <View style={styles.flex}>
+                      <Text style={styles.productName}>{product.name}</Text>
+                      {product.description && (
+                        <Text style={styles.meta}>{product.description}</Text>
+                      )}
+                    </View>
+                    {product.price != null && (
+                      <Text style={styles.productPrice}>S/ {product.price}</Text>
+                    )}
+                  </View>
+                ))}
+              </>
+            )}
 
             <Text style={styles.commentsTitle}>Reseñas</Text>
           </View>
@@ -255,6 +318,40 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { padding: 16, paddingBottom: 8 },
+  photoRow: { marginTop: 10 },
+  photo: { width: 130, height: 100, borderRadius: 10, marginRight: 8 },
+  ownerButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#111827',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: -6,
+    marginBottom: 20,
+  },
+  ownerButtonText: { color: '#fff', fontWeight: '600' },
+  claimButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#2563eb',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: -6,
+    marginBottom: 20,
+  },
+  claimButtonText: { color: '#2563eb', fontWeight: '600' },
+  productRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  productPhoto: { width: 48, height: 48, borderRadius: 8 },
+  productName: { fontWeight: '600' },
+  productPrice: { color: '#16a34a', fontWeight: '700' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   categoryTag: { color: '#2563eb', fontWeight: '600', fontSize: 13 },
   verified: { color: '#16a34a', fontSize: 12, fontWeight: '600' },
