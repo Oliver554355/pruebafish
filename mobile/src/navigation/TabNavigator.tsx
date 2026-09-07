@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MapScreen from '../screens/MapScreen';
 import CommunityScreen from '../screens/CommunityScreen';
@@ -26,6 +27,12 @@ function PublishTabButton({ onPress }: { onPress?: () => void }) {
 }
 
 export default function TabNavigator() {
+  // En celulares con navegacion por gestos (sin botones fisicos) el SO se
+  // queda con una franja de gestos pegada al borde inferior de la pantalla;
+  // si la tab bar no suma ese inset, los iconos quedan tapados por esa franja
+  // y el toque lo agarra el gesto de "ir a inicio" en vez de la app.
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ navigation }) => ({
@@ -42,7 +49,7 @@ export default function TabNavigator() {
             <Ionicons name="search" size={22} color={colors.text} />
           </TouchableOpacity>
         ),
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { height: 64 + insets.bottom, paddingBottom: 8 + insets.bottom }],
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textFaint,
         tabBarLabelStyle: styles.tabLabel,
@@ -94,8 +101,6 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.surface,
     borderTopColor: colors.border,
-    height: 64,
-    paddingBottom: 8,
     paddingTop: 6,
   },
   tabLabel: { fontSize: 11, fontWeight: '600' },
