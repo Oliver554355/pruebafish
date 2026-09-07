@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { PixelIcon } from '../PixelIcon';
+import { PixelIconV2 } from '../PixelIconV2';
 import MapScreen from '../screens/MapScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import PublishScreen from '../screens/PublishScreen';
@@ -21,9 +21,20 @@ function PublishTabButton({ onPress }: { onPress?: () => void }) {
   return (
     <TouchableOpacity style={styles.fabWrapper} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.fab}>
-        <PixelIcon name="PLUS" size={26} color={colors.onPrimary} />
+        <PixelIconV2 name="acciones/crear" size={30} />
       </View>
     </TouchableOpacity>
+  );
+}
+
+// Los iconos v2 traen su color de marca ya pintado (no son un solo tono
+// tintable como los Ionicons/PixelIcon viejos), asi que la tab activa se
+// marca atenuando las inactivas en vez de cambiarles el color.
+function TabIcon({ name, focused }: { name: string; focused: boolean }) {
+  return (
+    <View style={{ opacity: focused ? 1 : 0.4 }}>
+      <PixelIconV2 name={name} size={26} />
+    </View>
   );
 }
 
@@ -60,14 +71,14 @@ export default function TabNavigator() {
         name="Mapa"
         component={MapScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <PixelIcon name="PIN" size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="navegacion/mapa" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Comunidad"
         component={CommunityScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <PixelIcon name="NEWSPAPER" size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="navegacion/lista" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -84,14 +95,14 @@ export default function TabNavigator() {
         name="Explorar"
         component={ExploreScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <PixelIcon name="COMPASS" size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="otros/web" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Perfil"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <PixelIcon name="PERSON" size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="usuarios/usuario" focused={focused} />,
         }}
       />
     </Tab.Navigator>

@@ -12,8 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { FEED_PAGE_SIZE, fetchFeed } from '../api/posts';
 import { FeedPost, PostCategory } from '../types';
-import { CATEGORY_COLORS, CATEGORY_PIXEL_ICON, CATEGORY_LABELS } from '../categoryStyle';
-import { PixelIcon } from '../PixelIcon';
+import { CATEGORY_COLORS, CATEGORY_ICON_V2, CATEGORY_LABELS } from '../categoryStyle';
+import { PixelIconV2 } from '../PixelIconV2';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -40,9 +40,11 @@ function PostCard({ post, onPress }: { post: FeedPost; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.cardHeader}>
-        <View style={[styles.badge, { backgroundColor: CATEGORY_COLORS[post.category] }]}>
-          <PixelIcon name={CATEGORY_PIXEL_ICON[post.category]} size={12} color={colors.onPrimary} />
-          <Text style={styles.badgeText}>{CATEGORY_LABELS[post.category]}</Text>
+        <View style={styles.badge}>
+          <PixelIconV2 name={CATEGORY_ICON_V2[post.category]} size={22} />
+          <Text style={[styles.badgeText, { color: CATEGORY_COLORS[post.category] }]}>
+            {CATEGORY_LABELS[post.category]}
+          </Text>
         </View>
         <Text style={styles.time}>{timeAgo(post.createdAt)}</Text>
       </View>
@@ -196,12 +198,9 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
+    gap: spacing.xs,
   },
-  badgeText: { color: colors.onPrimary, fontSize: 11, fontWeight: '700' },
+  badgeText: { fontSize: 12, fontWeight: '700' },
   time: { ...typography.caption },
   title: { ...typography.h3, marginBottom: 4 },
   description: { ...typography.bodyMuted, marginBottom: spacing.sm },

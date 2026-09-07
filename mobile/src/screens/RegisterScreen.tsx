@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PixelIcon } from '../PixelIcon';
+import { PixelIconV2 } from '../PixelIconV2';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts, radius, spacing, typography } from '../theme';
 
@@ -37,7 +37,7 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.logoBadge}>
-        <PixelIcon name="PERSON" size={40} color={colors.onPrimary} />
+        <PixelIconV2 name="usuarios/usuario" size={68} />
       </View>
       <Text style={styles.title}>Crear cuenta</Text>
       <Text style={styles.subtitle}>Unite a tu comunidad</Text>

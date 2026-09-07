@@ -6,41 +6,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { fetchNearbyPosts } from '../api/posts';
 import { fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness, NearbyPost } from '../types';
-import { CATEGORY_COLORS, CATEGORY_LABELS, BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { CATEGORY_LABELS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { pixelIconSvgMarkup } from '../PixelIconV2';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { colors, radius, spacing, typography } from '../theme';
 
 const RADIUS_METERS = 5000;
+const PIN_SIZE = 32;
 
-// Emoji por categoría para los pines del mapa: el WebView no puede usar
-// Ionicons (son una fuente de icono nativa), así que se usa emoji para
-// mantener el look "colorido por categoría" del mockup dentro de Leaflet.
-const POST_EMOJI: Record<string, string> = {
-  ACCIDENTE: '🚨',
-  INCIDENTE: '⚠️',
-  ANIMAL_PERDIDO: '🐾',
-  ANIMAL_ENCONTRADO: '🐾',
-  ADOPCION: '❤️',
-  RECOMENDACION: '⭐',
-  EVENTO: '📅',
-  AVISO: '📢',
-  VENTA: '🏷️',
-  OTRO: '📍',
-};
-
-const BUSINESS_EMOJI: Record<string, string> = {
-  RESTAURANTE: '🍽️',
-  TIENDA: '🏪',
-  HOSTAL: '🛏️',
-  PARQUE: '🌳',
-  TURISMO: '📷',
-  FARMACIA: '⚕️',
-  SALUD: '🏥',
-  EDUCACION: '🏫',
-  BANCO_CAJERO: '💵',
-  PARADA: '🚌',
-  OTRO: '📍',
-};
+// El set de pines viene en svg/pins/post-<categoria>.svg / negocio-<categoria>.svg
+// con la categoria en kebab-case (ANIMAL_PERDIDO -> animal-perdido).
+function toKebab(category: string) {
+  return category.toLowerCase().replace(/_/g, '-');
+}
 
 // react-native-maps en Android necesita una API key de Google Maps para que
 // el MapView nativo ni siquiera se construya (revienta con
@@ -64,8 +42,7 @@ function buildMapHtml() {
     0%{transform:scale(1);opacity:0.8}
     100%{transform:scale(3.2);opacity:0}
   }
-  .pin{width:30px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;
-    font-size:15px;border:2px solid #F1F5F9;box-shadow:0 2px 5px rgba(0,0,0,0.5);}
+  .pin{filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));}
   .leaflet-popup-content-wrapper{background:#141B2E;color:#F1F5F9;border-radius:12px;}
   .leaflet-popup-tip{background:#141B2E;}
   .leaflet-popup-content b{color:#F1F5F9;}
@@ -93,12 +70,13 @@ function buildMapHtml() {
   const meIcon = L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [18, 18] });
   const mePulseIcon = L.divIcon({ className: '', html: '<div class="me-pulse"></div>', iconSize: [18, 18] });
 
-  function pinIcon(color, emoji) {
+  function pinIcon(svg, w, h) {
     return L.divIcon({
-      className: '',
-      html: '<div class="pin" style="background:' + color + '">' + emoji + '</div>',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
+      className: 'pin',
+      html: svg,
+      iconSize: [w, h],
+      iconAnchor: [w / 2, h],
+      popupAnchor: [0, -h],
     });
   }
 
@@ -125,14 +103,14 @@ function buildMapHtml() {
     } else if (data.type === 'posts') {
       markers.forEach(m => map.removeLayer(m));
       markers = data.posts.map(p =>
-        L.marker([p.lat, p.lng], { icon: pinIcon(p.color, p.emoji) })
+        L.marker([p.lat, p.lng], { icon: pinIcon(p.svg, p.w, p.h) })
           .bindPopup('<b>' + p.title + '</b><br>' + p.categoryLabel)
           .addTo(map)
       );
     } else if (data.type === 'businesses') {
       businessMarkers.forEach(m => map.removeLayer(m));
       businessMarkers = data.businesses.map(b =>
-        L.marker([b.lat, b.lng], { icon: pinIcon(b.color, b.emoji) })
+        L.marker([b.lat, b.lng], { icon: pinIcon(b.svg, b.w, b.h) })
           .bindPopup('<b>' + b.name + '</b><br>' + b.categoryLabel)
           .on('click', () => post({ type: 'businessClick', id: b.id }))
           .addTo(map)
@@ -180,29 +158,37 @@ export default function MapScreen({ navigation }: any) {
   useEffect(() => {
     postToWebView({
       type: 'posts',
-      posts: posts.map((p) => ({
-        lat: p.lat,
-        lng: p.lng,
-        title: p.title,
-        categoryLabel: CATEGORY_LABELS[p.category],
-        color: CATEGORY_COLORS[p.category],
-        emoji: POST_EMOJI[p.category] ?? '📍',
-      })),
+      posts: posts.map((p) => {
+        const svg = pixelIconSvgMarkup(`pins/post-${toKebab(p.category)}`, PIN_SIZE);
+        return {
+          lat: p.lat,
+          lng: p.lng,
+          title: p.title,
+          categoryLabel: CATEGORY_LABELS[p.category],
+          svg,
+          w: PIN_SIZE,
+          h: (PIN_SIZE * 24) / 20,
+        };
+      }),
     });
   }, [posts, postToWebView]);
 
   useEffect(() => {
     postToWebView({
       type: 'businesses',
-      businesses: businesses.map((b) => ({
-        id: b.id,
-        lat: b.lat,
-        lng: b.lng,
-        name: b.name,
-        categoryLabel: BUSINESS_CATEGORY_LABELS[b.category] ?? b.category,
-        color: BUSINESS_CATEGORY_COLORS[b.category] ?? colors.primary,
-        emoji: BUSINESS_EMOJI[b.category] ?? '📍',
-      })),
+      businesses: businesses.map((b) => {
+        const svg = pixelIconSvgMarkup(`pins/negocio-${toKebab(b.category)}`, PIN_SIZE);
+        return {
+          id: b.id,
+          lat: b.lat,
+          lng: b.lng,
+          name: b.name,
+          categoryLabel: BUSINESS_CATEGORY_LABELS[b.category] ?? b.category,
+          svg,
+          w: PIN_SIZE,
+          h: (PIN_SIZE * 24) / 20,
+        };
+      }),
     });
   }, [businesses, postToWebView]);
 

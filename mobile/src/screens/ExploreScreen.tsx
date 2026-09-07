@@ -11,8 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BUSINESSES_PAGE_SIZE, fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness } from '../types';
-import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_PIXEL_ICON, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
-import { PixelIcon } from '../PixelIcon';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICON_V2, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { PixelIconV2 } from '../PixelIconV2';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -25,9 +25,7 @@ function BusinessCard({
 }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <View style={[styles.icon, { backgroundColor: BUSINESS_CATEGORY_COLORS[business.category] }]}>
-        <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[business.category]} size={22} color={colors.onPrimary} />
-      </View>
+      <PixelIconV2 name={BUSINESS_CATEGORY_ICON_V2[business.category]} size={48} />
       <View style={styles.cardBody}>
         <View style={styles.cardHeader}>
           <Text style={styles.name} numberOfLines={1}>{business.name}</Text>
@@ -38,7 +36,9 @@ function BusinessCard({
             </View>
           )}
         </View>
-        <Text style={styles.category}>{BUSINESS_CATEGORY_LABELS[business.category]}</Text>
+        <Text style={[styles.category, { color: BUSINESS_CATEGORY_COLORS[business.category] }]}>
+          {BUSINESS_CATEGORY_LABELS[business.category]}
+        </Text>
         {business.address && <Text style={styles.address} numberOfLines={1}>{business.address}</Text>}
         <View style={styles.metaItem}>
           <Ionicons name="location-outline" size={12} color={colors.textMuted} />
@@ -159,13 +159,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   card: { ...card, marginBottom: spacing.md, flexDirection: 'row', gap: spacing.md },
-  icon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   cardBody: { flex: 1 },
   cardHeader: {
     flexDirection: 'row',

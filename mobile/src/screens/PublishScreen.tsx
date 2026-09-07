@@ -20,12 +20,12 @@ import {
 import {
   ANIMAL_SEX_LABELS,
   ANIMAL_SPECIES_LABELS,
-  CATEGORY_COLORS,
-  CATEGORY_PIXEL_ICON,
+  ANIMAL_SPECIES_ICON_V2,
+  CATEGORY_ICON_V2,
   CATEGORY_LABELS,
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
-import { PixelIcon } from '../PixelIcon';
+import { PixelIconV2 } from '../PixelIconV2';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -171,8 +171,8 @@ export default function PublishScreen({ navigation }: any) {
               onPress={() => setCategory(cat)}
               activeOpacity={0.85}
             >
-              <View style={[styles.gridIcon, { backgroundColor: CATEGORY_COLORS[cat] }]}>
-                <PixelIcon name={CATEGORY_PIXEL_ICON[cat]} size={24} color={colors.onPrimary} />
+              <View style={styles.gridIcon}>
+                <PixelIconV2 name={CATEGORY_ICON_V2[cat]} size={44} />
               </View>
               <Text style={styles.gridLabel}>{CATEGORY_LABELS[cat]}</Text>
             </TouchableOpacity>
@@ -185,9 +185,7 @@ export default function PublishScreen({ navigation }: any) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity style={styles.selectedCategoryRow} onPress={() => setCategory(null)}>
-        <View style={[styles.selectedIcon, { backgroundColor: CATEGORY_COLORS[category] }]}>
-          <PixelIcon name={CATEGORY_PIXEL_ICON[category]} size={20} color={colors.onPrimary} />
-        </View>
+        <PixelIconV2 name={CATEGORY_ICON_V2[category]} size={32} />
         <Text style={styles.selectedLabel}>{CATEGORY_LABELS[category]}</Text>
         <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         <Text style={styles.changeLabel}>Cambiar</Text>
@@ -222,8 +220,11 @@ export default function PublishScreen({ navigation }: any) {
               <TouchableOpacity
                 key={s}
                 onPress={() => setSpecies(s)}
-                style={[styles.chip, species === s && styles.chipActive]}
+                style={[styles.chip, styles.chipWithIcon, species === s && styles.chipActive]}
               >
+                {ANIMAL_SPECIES_ICON_V2[s] && (
+                  <PixelIconV2 name={ANIMAL_SPECIES_ICON_V2[s]!} size={18} />
+                )}
                 <Text style={[styles.chipText, species === s && styles.chipTextActive]}>
                   {ANIMAL_SPECIES_LABELS[s]}
                 </Text>
@@ -382,11 +383,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   gridIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: spacing.sm,
   },
   gridLabel: { ...typography.caption, color: colors.text, textAlign: 'center', fontWeight: '600' },
@@ -421,6 +417,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipWithIcon: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   chipText: { ...typography.caption, fontWeight: '600' },
   chipTextActive: { color: colors.onPrimary },
   input: {

@@ -12,13 +12,13 @@ import { fetchSaved } from '../api/saved';
 import { SavedItem } from '../types';
 import {
   BUSINESS_CATEGORY_COLORS,
-  BUSINESS_CATEGORY_PIXEL_ICON,
+  BUSINESS_CATEGORY_ICON_V2,
   BUSINESS_CATEGORY_LABELS,
   CATEGORY_COLORS,
-  CATEGORY_PIXEL_ICON,
+  CATEGORY_ICON_V2,
   CATEGORY_LABELS,
 } from '../categoryStyle';
-import { PixelIcon } from '../PixelIcon';
+import { PixelIconV2 } from '../PixelIconV2';
 import { card, colors, radius, spacing, typography } from '../theme';
 
 type Tab = 'ALL' | 'POSTS' | 'BUSINESSES';
@@ -120,11 +120,11 @@ export default function SavedScreen({ navigation }: any) {
               onPress={() => navigation.navigate('PostDetail', { postId: item.post!.id })}
               activeOpacity={0.85}
             >
-              <View style={[styles.icon, { backgroundColor: CATEGORY_COLORS[item.post.category] }]}>
-                <PixelIcon name={CATEGORY_PIXEL_ICON[item.post.category]} size={20} color={colors.onPrimary} />
-              </View>
+              <PixelIconV2 name={CATEGORY_ICON_V2[item.post.category]} size={44} />
               <View style={styles.cardBody}>
-                <Text style={styles.category}>{CATEGORY_LABELS[item.post.category]}</Text>
+                <Text style={[styles.category, { color: CATEGORY_COLORS[item.post.category] }]}>
+                  {CATEGORY_LABELS[item.post.category]}
+                </Text>
                 <Text style={styles.title} numberOfLines={2}>{item.post.title}</Text>
               </View>
             </TouchableOpacity>
@@ -134,11 +134,11 @@ export default function SavedScreen({ navigation }: any) {
               onPress={() => navigation.navigate('BusinessDetail', { businessId: item.business!.id })}
               activeOpacity={0.85}
             >
-              <View style={[styles.icon, { backgroundColor: BUSINESS_CATEGORY_COLORS[item.business.category] }]}>
-                <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[item.business.category]} size={20} color={colors.onPrimary} />
-              </View>
+              <PixelIconV2 name={BUSINESS_CATEGORY_ICON_V2[item.business.category]} size={44} />
               <View style={styles.cardBody}>
-                <Text style={styles.category}>{BUSINESS_CATEGORY_LABELS[item.business.category]}</Text>
+                <Text style={[styles.category, { color: BUSINESS_CATEGORY_COLORS[item.business.category] }]}>
+                  {BUSINESS_CATEGORY_LABELS[item.business.category]}
+                </Text>
                 <Text style={styles.title} numberOfLines={2}>{item.business.name}</Text>
               </View>
             </TouchableOpacity>
@@ -177,15 +177,8 @@ const styles = StyleSheet.create({
   tabTextActive: { color: colors.onPrimary },
   listContent: { padding: spacing.lg },
   card: { ...card, marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  icon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   cardBody: { flex: 1 },
-  category: { ...typography.caption, color: colors.primary, fontWeight: '700', marginBottom: 2 },
+  category: { ...typography.caption, fontWeight: '700', marginBottom: 2 },
   title: { ...typography.h3 },
   footer: { marginVertical: spacing.lg },
 });

@@ -21,8 +21,8 @@ import { fetchReactionSummary, toggleReaction } from '../api/reactions';
 import { fetchProducts } from '../api/products';
 import { toggleSaved } from '../api/saved';
 import { BusinessDetail, Comment, Product } from '../types';
-import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_PIXEL_ICON, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
-import { PixelIcon } from '../PixelIcon';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICON_V2, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { PixelIconV2 } from '../PixelIconV2';
 import { useAuth } from '../context/AuthContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -246,10 +246,10 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
         ListHeaderComponent={
           <View>
             <View style={styles.headerRow}>
-              <View style={[styles.categoryIcon, { backgroundColor: BUSINESS_CATEGORY_COLORS[business.category] }]}>
-                <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[business.category]} size={18} color={colors.onPrimary} />
-              </View>
-              <Text style={styles.categoryTag}>{BUSINESS_CATEGORY_LABELS[business.category]}</Text>
+              <PixelIconV2 name={BUSINESS_CATEGORY_ICON_V2[business.category]} size={30} />
+              <Text style={[styles.categoryTag, { color: BUSINESS_CATEGORY_COLORS[business.category] }]}>
+                {BUSINESS_CATEGORY_LABELS[business.category]}
+              </Text>
               {business.verified && (
                 <View style={styles.verifiedBadge}>
                   <Ionicons name="checkmark-circle" size={13} color={colors.success} />
@@ -446,8 +446,7 @@ const styles = StyleSheet.create({
   productName: { color: colors.text, fontWeight: '600' },
   productPrice: { color: colors.success, fontWeight: '700' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  categoryIcon: { width: 28, height: 28, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  categoryTag: { color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 },
+  categoryTag: { fontWeight: '700', fontSize: 13, flex: 1 },
   verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   verified: { color: colors.success, fontSize: 12, fontWeight: '600' },
   title: { ...typography.h1, fontSize: 20, marginBottom: spacing.xs },

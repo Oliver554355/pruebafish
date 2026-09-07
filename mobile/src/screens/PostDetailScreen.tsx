@@ -24,11 +24,11 @@ import {
   ANIMAL_SEX_LABELS,
   ANIMAL_SPECIES_LABELS,
   CATEGORY_COLORS,
-  CATEGORY_PIXEL_ICON,
+  CATEGORY_ICON_V2,
   CATEGORY_LABELS,
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
-import { PixelIcon } from '../PixelIcon';
+import { PixelIconV2 } from '../PixelIconV2';
 import { useAuth } from '../context/AuthContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -232,9 +232,11 @@ export default function PostDetailScreen({ route, navigation }: any) {
         }
         ListHeaderComponent={
           <View>
-            <View style={[styles.badge, { backgroundColor: CATEGORY_COLORS[post.category] }]}>
-              <PixelIcon name={CATEGORY_PIXEL_ICON[post.category]} size={13} color={colors.onPrimary} />
-              <Text style={styles.badgeText}>{CATEGORY_LABELS[post.category]}</Text>
+            <View style={styles.badge}>
+              <PixelIconV2 name={CATEGORY_ICON_V2[post.category]} size={26} />
+              <Text style={[styles.badgeText, { color: CATEGORY_COLORS[post.category] }]}>
+                {CATEGORY_LABELS[post.category]}
+              </Text>
             </View>
             <Text style={styles.title}>{post.title}</Text>
             {post.description && <Text style={styles.description}>{post.description}</Text>}
@@ -387,14 +389,11 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
     alignSelf: 'flex-start',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
     marginBottom: spacing.sm,
   },
-  badgeText: { color: colors.onPrimary, fontSize: 12, fontWeight: '700' },
+  badgeText: { fontSize: 13, fontWeight: '700' },
   title: { ...typography.h1, fontSize: 20, marginBottom: spacing.xs },
   description: { ...typography.body, marginBottom: spacing.sm },
   author: { color: colors.primary, fontSize: 13, fontWeight: '600' },

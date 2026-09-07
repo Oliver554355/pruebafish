@@ -9,10 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { PixelIcon } from '../PixelIcon';
+import { PixelIconV2 } from '../PixelIconV2';
 import { createBusiness } from '../api/businesses';
 import { BusinessCategory } from '../types';
-import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_PIXEL_ICON, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
+import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICON_V2, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { useCurrentLocation } from '../useCurrentLocation';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -71,10 +71,10 @@ export default function CreateBusinessScreen({ navigation }: any) {
             <TouchableOpacity
               key={cat}
               onPress={() => setCategory(cat)}
-              style={[styles.chip, active && { backgroundColor: BUSINESS_CATEGORY_COLORS[cat], borderColor: BUSINESS_CATEGORY_COLORS[cat] }]}
+              style={[styles.chip, active && { borderColor: BUSINESS_CATEGORY_COLORS[cat] }]}
             >
-              <PixelIcon name={BUSINESS_CATEGORY_PIXEL_ICON[cat]} size={13} color={active ? colors.onPrimary : colors.textMuted} />
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+              <PixelIconV2 name={BUSINESS_CATEGORY_ICON_V2[cat]} size={18} />
+              <Text style={[styles.chipText, active && { color: BUSINESS_CATEGORY_COLORS[cat] }]}>
                 {BUSINESS_CATEGORY_LABELS[cat]}
               </Text>
             </TouchableOpacity>
@@ -160,7 +160,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chipText: { ...typography.caption, fontWeight: '600' },
-  chipTextActive: { color: colors.onPrimary },
   input: {
     borderWidth: 1,
     borderColor: colors.border,

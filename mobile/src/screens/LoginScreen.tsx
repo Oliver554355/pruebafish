@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PixelIcon } from '../PixelIcon';
+import { PixelIconV2 } from '../PixelIconV2';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts, radius, spacing, typography } from '../theme';
 
@@ -36,7 +36,7 @@ export default function LoginScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.logoBadge}>
-        <PixelIcon name="PIN" size={40} color={colors.onPrimary} />
+        <PixelIconV2 name="navegacion/ubicacion" size={68} />
       </View>
       <Text style={styles.title}>Comunidad Chosica</Text>
       <Text style={styles.subtitle}>Tu comunidad, en un solo lugar</Text>

@@ -18,6 +18,22 @@ export const CATEGORY_COLORS: Record<PostCategory, string> = {
   OTRO: '#64748B',
 };
 
+// Iconos "v2" (SVG reales, insignia con volumen ya incluida en el pixel art
+// -- ver PixelIconV2.tsx). Reemplazan a CATEGORY_PIXEL_ICON/GLYPHS de mas
+// abajo, que quedan solo por si algun icono nuevo faltara.
+export const CATEGORY_ICON_V2: Record<PostCategory, string> = {
+  ACCIDENTE: 'publicaciones/accidente',
+  INCIDENTE: 'publicaciones/incidente',
+  ANIMAL_PERDIDO: 'publicaciones/animal-perdido',
+  ANIMAL_ENCONTRADO: 'publicaciones/animal-encontrado',
+  ADOPCION: 'publicaciones/adopcion',
+  RECOMENDACION: 'publicaciones/recomendacion',
+  EVENTO: 'publicaciones/evento',
+  AVISO: 'publicaciones/aviso',
+  VENTA: 'publicaciones/venta',
+  OTRO: 'publicaciones/otro',
+};
+
 export const CATEGORY_PIXEL_ICON: Record<PostCategory, GlyphName> = {
   ACCIDENTE: 'CAR',
   INCIDENTE: 'EXCLAIM',
@@ -49,6 +65,14 @@ export const ANIMAL_SPECIES_LABELS: Record<AnimalSpecies, string> = {
   GATO: 'Gato',
   AVE: 'Ave',
   OTRO: 'Otro',
+};
+
+// Sin icono propio para OTRO -- el pack no trae uno generico, se deja sin
+// icono (undefined) y la pantalla cae al chip de texto solo.
+export const ANIMAL_SPECIES_ICON_V2: Partial<Record<AnimalSpecies, string>> = {
+  PERRO: 'formularios/perro',
+  GATO: 'formularios/gato',
+  AVE: 'formularios/ave',
 };
 
 export const ANIMAL_SEX_LABELS: Record<AnimalSex, string> = {
@@ -88,6 +112,20 @@ export const BUSINESS_CATEGORY_COLORS: Record<BusinessCategory, string> = {
   BANCO_CAJERO: '#14B8A6',
   PARADA: '#64748B',
   OTRO: '#64748B',
+};
+
+export const BUSINESS_CATEGORY_ICON_V2: Record<BusinessCategory, string> = {
+  RESTAURANTE: 'lugares/restaurante',
+  TIENDA: 'lugares/tienda',
+  HOSTAL: 'lugares/hostal',
+  PARQUE: 'lugares/parque',
+  TURISMO: 'lugares/turismo',
+  FARMACIA: 'lugares/farmacia',
+  SALUD: 'lugares/salud',
+  EDUCACION: 'lugares/educacion',
+  BANCO_CAJERO: 'lugares/banco-cajero',
+  PARADA: 'lugares/parada',
+  OTRO: 'lugares/otro',
 };
 
 export const BUSINESS_CATEGORY_PIXEL_ICON: Record<BusinessCategory, GlyphName> = {
