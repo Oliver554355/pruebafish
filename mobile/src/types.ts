@@ -62,6 +62,17 @@ export interface NearbyPost {
   distance: number;
 }
 
+export interface Comment {
+  id: string;
+  content: string;
+  rating: number | null;
+  authorId: string;
+  postId: string | null;
+  businessId: string | null;
+  createdAt: string;
+  author: { id: string; username: string };
+}
+
 export interface FeedPost extends NearbyPost {
   reactionCount: number;
   commentCount: number;

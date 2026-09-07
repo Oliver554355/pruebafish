@@ -5,6 +5,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { fetchFeed } from '../api/posts';
@@ -21,9 +22,9 @@ function timeAgo(iso: string) {
   return `hace ${Math.floor(hours / 24)} d`;
 }
 
-function PostCard({ post }: { post: FeedPost }) {
+function PostCard({ post, onPress }: { post: FeedPost; onPress: () => void }) {
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.cardHeader}>
         <View
           style={[
@@ -43,11 +44,11 @@ function PostCard({ post }: { post: FeedPost }) {
         📍 {(post.distance / 1000).toFixed(1)} km · ❤️ {post.reactionCount} ·
         💬 {post.commentCount}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
-export default function CommunityScreen() {
+export default function CommunityScreen({ navigation }: any) {
   const { coords, loading: loadingLocation } = useCurrentLocation();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,7 +80,12 @@ export default function CommunityScreen() {
       contentContainerStyle={styles.listContent}
       data={posts}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <PostCard post={item} />}
+      renderItem={({ item }) => (
+        <PostCard
+          post={item}
+          onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
+        />
+      )}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={load} />
       }

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TabNavigator from './TabNavigator';
+import PostDetailScreen from '../screens/PostDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,11 @@ export default function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={TabNavigator} />
+      <Stack.Screen
+        name="PostDetail"
+        component={PostDetailScreen}
+        options={{ headerShown: true, title: 'Publicación' }}
+      />
     </Stack.Navigator>
   );
 }

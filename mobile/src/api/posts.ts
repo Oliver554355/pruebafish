@@ -13,6 +13,11 @@ export async function fetchNearbyPosts(
   return data;
 }
 
+export async function fetchPost(id: string): Promise<NearbyPost> {
+  const { data } = await api.get<NearbyPost>(`/posts/${id}`);
+  return data;
+}
+
 export async function fetchFeed(
   lat: number,
   lng: number,
