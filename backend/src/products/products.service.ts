@@ -36,6 +36,7 @@ export class ProductsService {
         description: dto.description,
         price: dto.price,
       },
+      include: { photos: true },
     });
   }
 
@@ -65,7 +66,11 @@ export class ProductsService {
   async update(id: string, userId: string, dto: UpdateProductDto) {
     const product = await this.findOne(id);
     await this.getEditableBusiness(product.businessId, userId);
-    return this.prisma.product.update({ where: { id }, data: dto });
+    return this.prisma.product.update({
+      where: { id },
+      data: dto,
+      include: { photos: true },
+    });
   }
 
   async remove(id: string, userId: string) {

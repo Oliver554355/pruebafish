@@ -332,7 +332,10 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {user && business.ownerId === user.id ? (
+            {user &&
+            (business.ownerId
+              ? business.ownerId === user.id
+              : business.createdById === user.id) ? (
               <TouchableOpacity
                 style={styles.ownerButton}
                 onPress={() => navigation.navigate('BusinessPanel', { businessId })}
