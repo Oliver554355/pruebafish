@@ -7,6 +7,10 @@ import {
 import { PostCategory, ReportStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { StorageService } from '../photos/storage.service';
+
+const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Pesos arbitrarios, punto de partida — igual que el ranking de
 // posts.service.feed, sin tuning con datos reales todavia. Base 3/5:
@@ -26,6 +30,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly storage: StorageService,
   ) {}
 
   findByEmail(email: string) {
@@ -38,6 +43,26 @@ export class UsersService {
 
   create(data: { email: string; username: string; passwordHash: string }) {
     return this.prisma.user.create({ data });
+  }
+
+  // Reemplaza avatarKey por una URL firmada (o null), igual que
+  // StorageService.signPhotos con los posts/negocios/productos -- nunca se
+  // devuelve la key cruda al cliente.
+  private async withAvatarUrl<T extends { avatarKey?: string | null }>(
+    user: T,
+  ): Promise<Omit<T, 'avatarKey'> & { avatarUrl: string | null }> {
+    const { avatarKey, ...rest } = user;
+    return {
+      ...rest,
+      avatarUrl: avatarKey ? await this.storage.getSignedUrl(avatarKey) : null,
+    };
+  }
+
+  async getMe(id: string) {
+    const user = await this.findById(id);
+    if (!user) return null;
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return this.withAvatarUrl(safeUser);
   }
 
   // Perfil "privado" editable por el propio usuario. Por ahora solo el
@@ -54,7 +79,53 @@ export class UsersService {
     }
     const user = await this.prisma.user.update({ where: { id }, data });
     const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+    return this.withAvatarUrl(safeUser);
+  }
+
+  // Autoservicio, sin moderador de por medio -- mismo criterio de tamaño y
+  // formato que PhotosService (5MB, JPEG/PNG/WEBP). Reemplaza cualquier
+  // avatar anterior en vez de acumular fotos (a diferencia de Photo, que es
+  // una galeria, el avatar es un solo campo del perfil).
+  async uploadAvatar(userId: string, file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Falta el archivo (campo "file")');
+    }
+    if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException('Solo se aceptan imagenes JPEG, PNG o WEBP');
+    }
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      throw new BadRequestException('La imagen no puede superar los 5MB');
+    }
+    const current = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarKey: true },
+    });
+    const key = await this.storage.upload(file);
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarKey: key },
+    });
+    if (current?.avatarKey) {
+      await this.storage.delete(current.avatarKey).catch(() => {});
+    }
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return this.withAvatarUrl(safeUser);
+  }
+
+  async removeAvatar(userId: string) {
+    const current = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarKey: true },
+    });
+    if (current?.avatarKey) {
+      await this.storage.delete(current.avatarKey).catch(() => {});
+    }
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarKey: null },
+    });
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return this.withAvatarUrl(safeUser);
   }
 
   updateFollowedCategories(id: string, categories: PostCategory[]) {
@@ -152,7 +223,7 @@ export class UsersService {
   async getPublicProfile(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: { id: true, username: true, createdAt: true },
+      select: { id: true, username: true, createdAt: true, avatarKey: true },
     });
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
@@ -165,14 +236,14 @@ export class UsersService {
         this.getReputation(id),
       ]);
 
-    return {
+    return this.withAvatarUrl({
       ...user,
       postsCount,
       commentsCount,
       followersCount,
       followingCount,
       reputation,
-    };
+    });
   }
 
   async toggleFollow(followerId: string, followingId: string) {

@@ -1,5 +1,5 @@
 import { api } from './client';
-import { BusinessCategory, BusinessDetail, NearbyBusiness } from '../types';
+import { BusinessCategory, BusinessDetail, MyBusiness, NearbyBusiness } from '../types';
 
 export const BUSINESSES_PAGE_SIZE = 20;
 
@@ -18,6 +18,14 @@ export async function fetchNearbyBusinesses(
 
 export async function fetchBusiness(id: string): Promise<BusinessDetail> {
   const { data } = await api.get<BusinessDetail>(`/businesses/${id}`);
+  return data;
+}
+
+// Points que el usuario logueado creo o de los que quedo como dueño --
+// atajo desde el perfil (ver ProfileScreen "Mis negocios") para
+// administrarlos sin tener que buscarlos en Explorar.
+export async function fetchMyBusinesses(): Promise<MyBusiness[]> {
+  const { data } = await api.get<MyBusiness[]>('/businesses/mine');
   return data;
 }
 

@@ -41,6 +41,16 @@ export class BusinessesController {
     return this.businessesService.findNearby(query);
   }
 
+  // Los points que el usuario logueado creo o de los que quedo como dueño
+  // (ver verify()) -- atajo desde el perfil para administrarlos sin tener
+  // que buscarlos en Explorar. Ruta estatica antes de ':id' por la misma
+  // razon que 'nearby'.
+  @UseGuards(JwtAuthGuard)
+  @Get('mine')
+  mine(@Request() req: { user: { userId: string } }) {
+    return this.businessesService.findMine(req.user.userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.businessesService.findOne(id);

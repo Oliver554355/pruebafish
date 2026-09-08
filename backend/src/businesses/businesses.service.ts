@@ -49,6 +49,16 @@ export class BusinessesService {
     });
   }
 
+  findMine(userId: string) {
+    return this.prisma.business.findMany({
+      where: {
+        hidden: false,
+        OR: [{ createdById: userId }, { ownerId: userId }],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   // Usa la columna "geog" (geography(Point,4326) + indice GIST) creada por
   // prisma/postgis-extensions.sql, igual que posts.findNearby.
   findNearby(query: NearbyBusinessQueryDto) {

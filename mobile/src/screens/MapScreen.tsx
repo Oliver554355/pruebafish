@@ -9,6 +9,7 @@ import { NearbyBusiness, NearbyPost } from '../types';
 import { CATEGORY_LABELS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { pixelIconSvgMarkup } from '../PixelIconV2';
 import { useLocation } from '../context/LocationContext';
+import { LEAFLET_CSS, LEAFLET_JS } from '../leafletAssets';
 import { colors, radius, spacing, typography } from '../theme';
 
 const RADIUS_METERS = 5000;
@@ -49,8 +50,8 @@ export type MapDestination = { lat: number; lng: number; label: string; svg: str
 function buildMapHtml() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>${LEAFLET_CSS}</style>
+<script>${LEAFLET_JS}</script>
 <style>
   html,body,#map{height:100%;margin:0;padding:0;background:#0B1220}
   .me-dot{width:18px;height:18px;border-radius:50%;background:#3B82F6;border:3px solid #F1F5F9;
@@ -74,13 +75,15 @@ function buildMapHtml() {
 <div id="map"></div>
 <script>
   const map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
-  // CARTO's dark_all tiles ahora piden API key (dejaron de servir anonimo),
-  // asi que se usa el basemap oscuro gratuito de Esri (sin key requerida).
-  L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 16, attribution: '© Esri'
-  }).addTo(map);
-  L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 16, attribution: '© Esri'
+  // Teselas estandar de OpenStreetMap -- las mismas que se usaron en el
+  // primer intento del mapa (ver git log), con calles, barrios y puntos de
+  // interes ya etiquetados. Se probaron alternativas oscuras (CARTO
+  // dark_all, gratuito hace un tiempo) pero ahora devuelven un watermark
+  // de "API KEY REQUIRED" en vez de teselas reales -- estas siguen
+  // sirviendo sin key.
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
   let markers = [];

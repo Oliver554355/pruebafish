@@ -1,9 +1,25 @@
-import { Body, Controller, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Request,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateFollowedCategoriesDto } from './dto/update-followed-categories.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+
+const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 
 @Controller('users')
 export class UsersController {
@@ -11,11 +27,8 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async me(@Request() req: { user: { userId: string } }) {
-    const user = await this.usersService.findById(req.user.userId);
-    if (!user) return null;
-    const { passwordHash: _passwordHash, ...safeUser } = user;
-    return safeUser;
+  me(@Request() req: { user: { userId: string } }) {
+    return this.usersService.getMe(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -25,6 +38,27 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(req.user.userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_AVATAR_SIZE_BYTES },
+    }),
+  )
+  @Post('me/avatar')
+  uploadAvatar(
+    @Request() req: { user: { userId: string } },
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.usersService.uploadAvatar(req.user.userId, file);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('me/avatar')
+  removeAvatar(@Request() req: { user: { userId: string } }) {
+    return this.usersService.removeAvatar(req.user.userId);
   }
 
   // Preferencia para el feed (GET /posts/feed): boost a las categorias que

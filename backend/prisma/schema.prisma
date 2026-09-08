@@ -12,6 +12,10 @@ model User {
   email           String     @unique
   username        String     @unique
   passwordHash    String
+  // Igual que Photo.key: nunca se guarda ni se devuelve una URL fija --
+  // se firma al vuelo con StorageService.getSignedUrl() cada vez que se
+  // devuelve el perfil (ver UsersService.withAvatarUrl).
+  avatarKey       String?
   // Rol de moderacion basico: sin panel admin todavia, se activa a mano
   // con un UPDATE en la base de datos (ver ROADMAP.md).
   isModerator     Boolean    @default(false)

@@ -34,6 +34,7 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  avatarUrl: string | null;
   isModerator: boolean;
   followedCategories: PostCategory[];
   createdAt: string;
@@ -42,6 +43,7 @@ export interface User {
 export interface PublicProfile {
   id: string;
   username: string;
+  avatarUrl: string | null;
   createdAt: string;
   postsCount: number;
   commentsCount: number;
@@ -213,3 +215,5 @@ export interface NearbyBusiness {
   createdAt: string;
   distance: number;
 }
+
+export type MyBusiness = Omit<NearbyBusiness, 'distance'>;

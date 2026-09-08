@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { fetchFollowers, fetchPublicProfile, toggleFollow } from '../api/users';
 import { PublicProfile } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -60,7 +60,11 @@ export default function UserProfileScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{profile.username.charAt(0).toUpperCase()}</Text>
+        {profile.avatarUrl ? (
+          <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
+        ) : (
+          <Text style={styles.avatarText}>{profile.username.charAt(0).toUpperCase()}</Text>
+        )}
       </View>
       <Text style={styles.username}>{profile.username}</Text>
 
@@ -131,7 +135,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.md,
+    overflow: 'hidden',
   },
+  avatarImage: { width: '100%', height: '100%' },
   avatarText: { color: colors.onPrimary, fontSize: 28, fontWeight: '800' },
   username: { ...typography.h1, marginTop: spacing.md, marginBottom: spacing.lg },
   followButton: {
