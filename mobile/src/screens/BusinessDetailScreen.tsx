@@ -5,7 +5,6 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -22,7 +21,8 @@ import { fetchProducts } from '../api/products';
 import { toggleSaved } from '../api/saved';
 import { BusinessDetail, Comment, Product } from '../types';
 import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICON_V2, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
-import { PixelIconV2 } from '../PixelIconV2';
+import { PixelIconV2, pixelIconSvgMarkup } from '../PixelIconV2';
+import { toKebab } from './MapScreen';
 import { useAuth } from '../context/AuthContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -189,9 +189,21 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
   }
 
   function handleGetDirections() {
-    Linking.openURL(
-      `https://www.google.com/maps/dir/?api=1&destination=${business!.lat},${business!.lng}`,
-    );
+    // Ruteo nativo dentro de la app (linea recta sobre nuestro propio mapa),
+    // no abre Google Maps -- ver MapScreen.tsx.
+    navigation.navigate('Main', {
+      screen: 'Mapa',
+      params: {
+        destination: {
+          lat: business!.lat,
+          lng: business!.lng,
+          label: business!.name,
+          svg: pixelIconSvgMarkup(`pins/negocio-${toKebab(business!.category)}`, 32),
+          w: 32,
+          h: (32 * 24) / 20,
+        },
+      },
+    });
   }
 
   function handleDeleteComment(id: string) {

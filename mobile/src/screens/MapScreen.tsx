@@ -15,10 +15,29 @@ const RADIUS_METERS = 5000;
 const PIN_SIZE = 32;
 
 // El set de pines viene en svg/pins/post-<categoria>.svg / negocio-<categoria>.svg
-// con la categoria en kebab-case (ANIMAL_PERDIDO -> animal-perdido).
-function toKebab(category: string) {
+// con la categoria en kebab-case (ANIMAL_PERDIDO -> animal-perdido). Se
+// exporta para que PostDetail/BusinessDetail arme el mismo pin al mandar a
+// "Como llegar" (mismo icono que ya se ve al navegar el mapa normal).
+export function toKebab(category: string) {
   return category.toLowerCase().replace(/_/g, '-');
 }
+
+// Distancia en linea recta (haversine) -- "Como llegar" no tiene ruteo real
+// (no hay SDK de mapas nativo ni API de rutas contratada), asi que en vez de
+// mandar a Google Maps se traza una linea recta al destino dentro de la
+// propia app y se muestra esta distancia.
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export type MapDestination = { lat: number; lng: number; label: string; svg: string; w: number; h: number };
 
 // react-native-maps en Android necesita una API key de Google Maps para que
 // el MapView nativo ni siquiera se construya (revienta con
@@ -43,6 +62,8 @@ function buildMapHtml() {
     100%{transform:scale(3.2);opacity:0}
   }
   .pin{filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));}
+  .dest-ring{width:16px;height:16px;border-radius:50%;border:3px solid #22C55E;
+    box-shadow:0 0 0 4px rgba(34,197,94,0.25);}
   .leaflet-popup-content-wrapper{background:#141B2E;color:#F1F5F9;border-radius:12px;}
   .leaflet-popup-tip{background:#141B2E;}
   .leaflet-popup-content b{color:#F1F5F9;}
@@ -66,6 +87,9 @@ function buildMapHtml() {
   let businessMarkers = [];
   let userMarker = null;
   let userPulse = null;
+  let routeLine = null;
+  let routeDestMarker = null;
+  let lastCenter = null;
 
   const meIcon = L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [18, 18] });
   const mePulseIcon = L.divIcon({ className: '', html: '<div class="me-pulse"></div>', iconSize: [18, 18] });
@@ -95,11 +119,28 @@ function buildMapHtml() {
   function handleMessage(e) {
     const data = JSON.parse(e.data);
     if (data.type === 'center') {
-      map.setView([data.lat, data.lng], data.zoom || 15);
-      if (userPulse) userPulse.setLatLng([data.lat, data.lng]);
-      else userPulse = L.marker([data.lat, data.lng], { icon: mePulseIcon, interactive: false, zIndexOffset: 998 }).addTo(map);
-      if (userMarker) userMarker.setLatLng([data.lat, data.lng]);
-      else userMarker = L.marker([data.lat, data.lng], { icon: meIcon, interactive: false, zIndexOffset: 999 }).addTo(map);
+      lastCenter = [data.lat, data.lng];
+      map.setView(lastCenter, data.zoom || 15);
+      if (userPulse) userPulse.setLatLng(lastCenter);
+      else userPulse = L.marker(lastCenter, { icon: mePulseIcon, interactive: false, zIndexOffset: 998 }).addTo(map);
+      if (userMarker) userMarker.setLatLng(lastCenter);
+      else userMarker = L.marker(lastCenter, { icon: meIcon, interactive: false, zIndexOffset: 999 }).addTo(map);
+      if (routeLine) routeLine.setLatLngs([lastCenter, routeLine.getLatLngs()[1]]);
+    } else if (data.type === 'route') {
+      if (routeDestMarker) map.removeLayer(routeDestMarker);
+      if (routeLine) map.removeLayer(routeLine);
+      const dest = [data.lat, data.lng];
+      const origin = lastCenter || dest;
+      routeDestMarker = L.marker(dest, { icon: pinIcon(data.svg, data.w, data.h), zIndexOffset: 1000 })
+        .bindPopup('<b>' + data.label + '</b>')
+        .addTo(map);
+      routeLine = L.polyline([origin, dest], {
+        color: '#22C55E', weight: 4, opacity: 0.85, dashArray: '2 10', lineCap: 'round'
+      }).addTo(map);
+      map.fitBounds(L.latLngBounds([origin, dest]), { padding: [56, 56] });
+    } else if (data.type === 'clearRoute') {
+      if (routeDestMarker) { map.removeLayer(routeDestMarker); routeDestMarker = null; }
+      if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
     } else if (data.type === 'posts') {
       markers.forEach(m => map.removeLayer(m));
       markers = data.posts.map(p =>
@@ -121,7 +162,7 @@ function buildMapHtml() {
 </body></html>`;
 }
 
-export default function MapScreen({ navigation }: any) {
+export default function MapScreen({ navigation, route }: any) {
   const { coords, loading: loadingLocation } = useCurrentLocation();
   const [posts, setPosts] = useState<NearbyPost[]>([]);
   const [businesses, setBusinesses] = useState<NearbyBusiness[]>([]);
@@ -129,6 +170,7 @@ export default function MapScreen({ navigation }: any) {
   const [recentering, setRecentering] = useState(false);
   const webviewRef = useRef<WebView>(null);
   const html = useMemo(buildMapHtml, []);
+  const destination: MapDestination | undefined = route?.params?.destination;
 
   const loadNearby = useCallback(async (lat: number, lng: number) => {
     setLoadingPosts(true);
@@ -192,6 +234,22 @@ export default function MapScreen({ navigation }: any) {
     });
   }, [businesses, postToWebView]);
 
+  useEffect(() => {
+    if (destination) {
+      postToWebView({ type: 'route', ...destination });
+    } else {
+      postToWebView({ type: 'clearRoute' });
+    }
+  }, [destination, postToWebView]);
+
+  function handleCloseRoute() {
+    navigation.setParams({ destination: undefined });
+  }
+
+  const routeDistanceKm = destination && coords
+    ? (haversineMeters(coords.lat, coords.lng, destination.lat, destination.lng) / 1000).toFixed(1)
+    : null;
+
   const onMessage = useCallback(
     (event: WebViewMessageEvent) => {
       const data = JSON.parse(event.nativeEvent.data);
@@ -234,9 +292,10 @@ export default function MapScreen({ navigation }: any) {
         originWhitelist={['*']}
         source={{ html }}
         onMessage={onMessage}
-        onLoadEnd={() =>
-          postToWebView({ type: 'center', lat: coords.lat, lng: coords.lng })
-        }
+        onLoadEnd={() => {
+          postToWebView({ type: 'center', lat: coords.lat, lng: coords.lng });
+          if (destination) postToWebView({ type: 'route', ...destination });
+        }}
       />
       {loadingPosts && (
         <View style={styles.loadingBadge}>
@@ -250,11 +309,25 @@ export default function MapScreen({ navigation }: any) {
           <Ionicons name="locate" size={22} color={colors.primary} />
         )}
       </TouchableOpacity>
-      <View style={styles.countBadge}>
-        <Text style={styles.countText}>
-          {posts.length} publicaciones · {businesses.length} points cerca
-        </Text>
-      </View>
+      {destination ? (
+        <View style={styles.routeCard}>
+          <View style={styles.routeCardInfo}>
+            <Text style={styles.routeCardLabel} numberOfLines={1}>{destination.label}</Text>
+            {routeDistanceKm && (
+              <Text style={styles.routeCardDistance}>{routeDistanceKm} km en línea recta</Text>
+            )}
+          </View>
+          <TouchableOpacity style={styles.routeCardClose} onPress={handleCloseRoute}>
+            <Ionicons name="close" size={18} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>
+            {posts.length} publicaciones · {businesses.length} points cerca
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -299,4 +372,31 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   countText: { ...typography.caption, color: colors.text, fontWeight: '600' },
+  routeCard: {
+    position: 'absolute',
+    bottom: 24,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.success,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    elevation: 3,
+  },
+  routeCardInfo: { flex: 1 },
+  routeCardLabel: { ...typography.h3, fontSize: 14 },
+  routeCardDistance: { ...typography.caption, color: colors.success, marginTop: 2 },
+  routeCardClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

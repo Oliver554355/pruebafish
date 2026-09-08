@@ -5,7 +5,6 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -28,7 +27,8 @@ import {
   CATEGORY_LABELS,
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
-import { PixelIconV2 } from '../PixelIconV2';
+import { PixelIconV2, pixelIconSvgMarkup } from '../PixelIconV2';
+import { toKebab } from './MapScreen';
 import { useAuth } from '../context/AuthContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
@@ -177,9 +177,21 @@ export default function PostDetailScreen({ route, navigation }: any) {
   }
 
   function handleGetDirections() {
-    Linking.openURL(
-      `https://www.google.com/maps/dir/?api=1&destination=${post!.lat},${post!.lng}`,
-    );
+    // Ruteo nativo dentro de la app (linea recta sobre nuestro propio mapa),
+    // no abre Google Maps -- ver MapScreen.tsx.
+    navigation.navigate('Main', {
+      screen: 'Mapa',
+      params: {
+        destination: {
+          lat: post!.lat,
+          lng: post!.lng,
+          label: post!.title,
+          svg: pixelIconSvgMarkup(`pins/post-${toKebab(post!.category)}`, 32),
+          w: 32,
+          h: (32 * 24) / 20,
+        },
+      },
+    });
   }
 
   function handleDeleteComment(id: string) {
