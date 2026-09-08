@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import { LocationProvider } from '../context/LocationContext';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TabNavigator from './TabNavigator';
@@ -32,6 +33,7 @@ export default function RootNavigator() {
   }
 
   return (
+    <LocationProvider>
     <Stack.Navigator screenOptions={{ headerShown: false, headerTitleStyle }}>
       <Stack.Screen name="Main" component={TabNavigator} />
       <Stack.Screen
@@ -78,5 +80,6 @@ export default function RootNavigator() {
         options={{ headerShown: true, title: 'Buscar' }}
       />
     </Stack.Navigator>
+    </LocationProvider>
   );
 }

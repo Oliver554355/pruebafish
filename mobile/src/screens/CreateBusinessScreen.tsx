@@ -13,13 +13,13 @@ import { PixelIconV2 } from '../PixelIconV2';
 import { createBusiness } from '../api/businesses';
 import { BusinessCategory } from '../types';
 import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICON_V2, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
-import { useCurrentLocation } from '../useCurrentLocation';
+import { useLocation } from '../context/LocationContext';
 import { colors, radius, spacing, typography } from '../theme';
 
 const CATEGORIES = Object.keys(BUSINESS_CATEGORY_LABELS) as BusinessCategory[];
 
 export default function CreateBusinessScreen({ navigation }: any) {
-  const { coords } = useCurrentLocation();
+  const { coords } = useLocation();
   const [category, setCategory] = useState<BusinessCategory>('RESTAURANTE');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');

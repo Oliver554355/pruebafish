@@ -14,7 +14,7 @@ import { FEED_PAGE_SIZE, fetchFeed } from '../api/posts';
 import { FeedPost, PostCategory } from '../types';
 import { CATEGORY_COLORS, CATEGORY_ICON_V2, CATEGORY_LABELS } from '../categoryStyle';
 import { PixelIconV2 } from '../PixelIconV2';
-import { useCurrentLocation } from '../useCurrentLocation';
+import { useLocation } from '../context/LocationContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
 // Filtro por categoria del mockup (Todos/Animales/Seguridad/Recomendaciones):
@@ -71,7 +71,7 @@ function PostCard({ post, onPress }: { post: FeedPost; onPress: () => void }) {
 }
 
 export default function CommunityScreen({ navigation }: any) {
-  const { coords, loading: loadingLocation } = useCurrentLocation();
+  const { coords, loading: loadingLocation } = useLocation();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);

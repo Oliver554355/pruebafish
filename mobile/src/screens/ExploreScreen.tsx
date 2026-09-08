@@ -13,7 +13,7 @@ import { BUSINESSES_PAGE_SIZE, fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness } from '../types';
 import { BUSINESS_CATEGORY_COLORS, BUSINESS_CATEGORY_ICON_V2, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { PixelIconV2 } from '../PixelIconV2';
-import { useCurrentLocation } from '../useCurrentLocation';
+import { useLocation } from '../context/LocationContext';
 import { card, colors, radius, spacing, typography } from '../theme';
 
 function BusinessCard({
@@ -50,7 +50,7 @@ function BusinessCard({
 }
 
 export default function ExploreScreen({ navigation }: any) {
-  const { coords, loading: loadingLocation } = useCurrentLocation();
+  const { coords, loading: loadingLocation } = useLocation();
   const [businesses, setBusinesses] = useState<NearbyBusiness[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);

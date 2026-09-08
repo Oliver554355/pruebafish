@@ -8,7 +8,7 @@ import { fetchNearbyBusinesses } from '../api/businesses';
 import { NearbyBusiness, NearbyPost } from '../types';
 import { CATEGORY_LABELS, BUSINESS_CATEGORY_LABELS } from '../categoryStyle';
 import { pixelIconSvgMarkup } from '../PixelIconV2';
-import { useCurrentLocation } from '../useCurrentLocation';
+import { useLocation } from '../context/LocationContext';
 import { colors, radius, spacing, typography } from '../theme';
 
 const RADIUS_METERS = 5000;
@@ -163,7 +163,7 @@ function buildMapHtml() {
 }
 
 export default function MapScreen({ navigation, route }: any) {
-  const { coords, loading: loadingLocation } = useCurrentLocation();
+  const { coords, loading: loadingLocation } = useLocation();
   const [posts, setPosts] = useState<NearbyPost[]>([]);
   const [businesses, setBusinesses] = useState<NearbyBusiness[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);

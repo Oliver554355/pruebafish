@@ -26,7 +26,7 @@ import {
   SALE_CONDITION_LABELS,
 } from '../categoryStyle';
 import { PixelIconV2 } from '../PixelIconV2';
-import { useCurrentLocation } from '../useCurrentLocation';
+import { useLocation } from '../context/LocationContext';
 import { colors, radius, spacing, typography } from '../theme';
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PostCategory[];
@@ -40,7 +40,7 @@ function todayISODate() {
 }
 
 export default function PublishScreen({ navigation }: any) {
-  const { coords } = useCurrentLocation();
+  const { coords } = useLocation();
   const [category, setCategory] = useState<PostCategory | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
