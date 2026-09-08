@@ -44,7 +44,8 @@ export class BusinessesService {
     if (query.locationId) where.locationId = query.locationId;
     return this.prisma.business.findMany({
       where,
-      orderBy: { name: 'asc' },
+      // Los verificados van primero; adentro de cada grupo, alfabetico.
+      orderBy: [{ verified: 'desc' }, { name: 'asc' }],
     });
   }
 
@@ -65,7 +66,7 @@ export class BusinessesService {
       )
       AND hidden = false
       ${category ? Prisma.sql`AND category = ${category}::"BusinessCategory"` : Prisma.empty}
-      ORDER BY distance ASC
+      ORDER BY verified DESC, distance ASC
       LIMIT ${limit}
       OFFSET ${offset};
     `);
@@ -99,9 +100,8 @@ export class BusinessesService {
 
   async update(id: string, userId: string, dto: UpdateBusinessDto) {
     const business = await this.findOne(id);
-    // Si ya tiene dueño verificado (ver BusinessClaim), solo ese dueño
-    // puede editar — el createdById original pierde el permiso. Sin
-    // verificar todavia, sigue mandando quien lo dio de alta.
+    // Si ya tiene dueño (auto-verificado, ver verify() abajo), solo ese
+    // dueño puede editar. Sin verificar todavia, manda quien lo dio de alta.
     const canEdit = business.ownerId
       ? business.ownerId === userId
       : business.createdById === userId;
@@ -109,5 +109,24 @@ export class BusinessesService {
       throw new ForbiddenException('No podés editar este negocio');
     }
     return this.prisma.business.update({ where: { id }, data: dto });
+  }
+
+  // Autoverificacion: sin moderador de por medio, el creador (o el dueño
+  // ya asignado) confirma que administra el point. Evita el ida-y-vuelta
+  // de esperar una aprobacion para poder cargar el menu/fotos.
+  async verify(id: string, userId: string) {
+    const business = await this.prisma.business.findUnique({ where: { id } });
+    if (!business) throw new NotFoundException('Negocio no encontrado');
+    const canVerify = business.ownerId
+      ? business.ownerId === userId
+      : business.createdById === userId;
+    if (!canVerify) {
+      throw new ForbiddenException('No podés verificar este negocio');
+    }
+    if (business.verified) return business;
+    return this.prisma.business.update({
+      where: { id },
+      data: { verified: true, ownerId: business.ownerId ?? userId },
+    });
   }
 }

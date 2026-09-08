@@ -45,3 +45,10 @@ export async function updateBusiness(id: string, input: UpdateBusinessInput) {
   const { data } = await api.patch(`/businesses/${id}`, input);
   return data;
 }
+
+// Autoverificacion desde el panel del dueño/creador -- sin moderador de
+// por medio, ver businesses.service.ts#verify en el backend.
+export async function verifyBusiness(id: string): Promise<BusinessDetail> {
+  const { data } = await api.patch<BusinessDetail>(`/businesses/${id}/verify`);
+  return data;
+}

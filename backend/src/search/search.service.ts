@@ -46,7 +46,7 @@ export class SearchService {
             { description: { contains: query, mode: 'insensitive' } },
           ],
         },
-        orderBy: { name: 'asc' },
+        orderBy: [{ verified: 'desc' }, { name: 'asc' }],
         take: RESULTS_PER_TYPE,
         select: {
           id: true,

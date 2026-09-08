@@ -55,4 +55,15 @@ export class BusinessesController {
   ) {
     return this.businessesService.update(id, req.user.userId, dto);
   }
+
+  // Autoverificacion: el creador (o dueño, si ya lo hay) confirma que es
+  // el encargado del point, sin esperar aprobacion de un moderador.
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/verify')
+  verify(
+    @Param('id') id: string,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.businessesService.verify(id, req.user.userId);
+  }
 }

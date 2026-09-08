@@ -8,8 +8,6 @@ import PostDetailScreen from '../screens/PostDetailScreen';
 import BusinessDetailScreen from '../screens/BusinessDetailScreen';
 import CreateBusinessScreen from '../screens/CreateBusinessScreen';
 import BusinessPanelScreen from '../screens/BusinessPanelScreen';
-import ClaimBusinessScreen from '../screens/ClaimBusinessScreen';
-import ModerationScreen from '../screens/ModerationScreen';
 import SavedScreen from '../screens/SavedScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import FollowListScreen from '../screens/FollowListScreen';
@@ -55,16 +53,6 @@ export default function RootNavigator() {
         name="BusinessPanel"
         component={BusinessPanelScreen}
         options={{ headerShown: true, title: 'Panel del point' }}
-      />
-      <Stack.Screen
-        name="ClaimBusiness"
-        component={ClaimBusinessScreen}
-        options={{ headerShown: true, title: 'Reclamar point' }}
-      />
-      <Stack.Screen
-        name="Moderation"
-        component={ModerationScreen}
-        options={{ headerShown: true, title: 'Moderación' }}
       />
       <Stack.Screen
         name="Saved"

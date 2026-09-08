@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { fetchBusiness, updateBusiness } from '../api/businesses';
+import { fetchBusiness, updateBusiness, verifyBusiness } from '../api/businesses';
 import {
   createProduct,
   deleteProduct,
@@ -36,6 +36,7 @@ export default function BusinessPanelScreen({ route }: any) {
   const [phone, setPhone] = useState('');
   const [hours, setHours] = useState('');
   const [savingInfo, setSavingInfo] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [uploadingBusinessPhoto, setUploadingBusinessPhoto] = useState(false);
 
   const [newProductName, setNewProductName] = useState('');
@@ -97,6 +98,33 @@ export default function BusinessPanelScreen({ route }: any) {
     } finally {
       setSavingInfo(false);
     }
+  }
+
+  function handleVerify() {
+    Alert.alert(
+      'Verificar negocio',
+      'Confirmá que sos el dueño o encargado de este point. Los points verificados aparecen primero en las búsquedas y el mapa.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Verificar',
+          onPress: async () => {
+            setVerifying(true);
+            try {
+              const updated = await verifyBusiness(businessId);
+              setBusiness((prev) => (prev ? { ...prev, ...updated } : prev));
+            } catch (err: any) {
+              Alert.alert(
+                'No se pudo verificar',
+                err?.response?.data?.message ?? 'Intentá de nuevo en un momento.',
+              );
+            } finally {
+              setVerifying(false);
+            }
+          },
+        },
+      ],
+    );
   }
 
   async function handleAddBusinessPhoto() {
@@ -265,6 +293,28 @@ export default function BusinessPanelScreen({ route }: any) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Panel de {business.name}</Text>
+
+      {business.verified ? (
+        <View style={styles.verifiedRow}>
+          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+          <Text style={styles.verifiedText}>Negocio verificado</Text>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.verifyButton}
+          onPress={handleVerify}
+          disabled={verifying}
+        >
+          {verifying ? (
+            <ActivityIndicator color={colors.onPrimary} size="small" />
+          ) : (
+            <>
+              <Ionicons name="shield-checkmark-outline" size={15} color={colors.onPrimary} />
+              <Text style={styles.verifyButtonText}>Verificar negocio</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      )}
 
       <Text style={styles.sectionTitle}>Información</Text>
       <TextInput style={styles.input} placeholder="Nombre" placeholderTextColor={colors.textFaint} value={name} onChangeText={setName} />
@@ -436,6 +486,21 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   container: { padding: spacing.lg, paddingBottom: 48, backgroundColor: colors.bg },
   title: { ...typography.h1, fontSize: 20, marginBottom: spacing.sm },
+  verifiedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.sm },
+  verifiedText: { color: colors.success, fontWeight: '600' },
+  verifyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  verifyButtonText: { color: colors.onPrimary, fontWeight: '700' },
   sectionTitle: { ...typography.h3, fontSize: 16, marginTop: spacing.xl, marginBottom: spacing.sm },
   input: {
     borderWidth: 1,

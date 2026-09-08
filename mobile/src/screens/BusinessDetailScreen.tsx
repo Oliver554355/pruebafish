@@ -333,32 +333,17 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             </View>
 
             {user &&
-            (business.ownerId
-              ? business.ownerId === user.id
-              : business.createdById === user.id) ? (
-              <TouchableOpacity
-                style={styles.ownerButton}
-                onPress={() => navigation.navigate('BusinessPanel', { businessId })}
-              >
-                <Ionicons name="settings-outline" size={15} color={colors.onPrimary} />
-                <Text style={styles.ownerButtonText}>Panel del point</Text>
-              </TouchableOpacity>
-            ) : (
-              user &&
-              !business.verified && (
+              (business.ownerId
+                ? business.ownerId === user.id
+                : business.createdById === user.id) && (
                 <TouchableOpacity
-                  style={styles.claimButton}
-                  onPress={() =>
-                    navigation.navigate('ClaimBusiness', {
-                      businessId,
-                      businessName: business.name,
-                    })
-                  }
+                  style={styles.ownerButton}
+                  onPress={() => navigation.navigate('BusinessPanel', { businessId })}
                 >
-                  <Text style={styles.claimButtonText}>Reclamar este point</Text>
+                  <Ionicons name="settings-outline" size={15} color={colors.onPrimary} />
+                  <Text style={styles.ownerButtonText}>Panel del point</Text>
                 </TouchableOpacity>
-              )
-            )}
+              )}
 
             {products.length > 0 && (
               <>
@@ -439,16 +424,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   ownerButtonText: { color: colors.onPrimary, fontWeight: '700' },
-  claimButton: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  claimButtonText: { color: colors.primary, fontWeight: '600' },
   productRow: {
     flexDirection: 'row',
     alignItems: 'center',

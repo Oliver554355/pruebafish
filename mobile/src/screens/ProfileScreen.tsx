@@ -151,17 +151,6 @@ export default function ProfileScreen({ navigation }: any) {
         <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
       </TouchableOpacity>
 
-      {user.isModerator && (
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('Moderation')}
-        >
-          <Ionicons name="shield-checkmark-outline" size={18} color={colors.text} />
-          <Text style={styles.menuItemText}>Moderación</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-        </TouchableOpacity>
-      )}
-
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Ionicons name="log-out-outline" size={18} color={colors.danger} />
         <Text style={styles.logoutButtonText}>Cerrar sesión</Text>

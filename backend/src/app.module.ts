@@ -10,7 +10,6 @@ import { CommentsModule } from './comments/comments.module';
 import { ReactionsModule } from './reactions/reactions.module';
 import { ReportsModule } from './reports/reports.module';
 import { PhotosModule } from './photos/photos.module';
-import { BusinessClaimsModule } from './business-claims/business-claims.module';
 import { SavedModule } from './saved/saved.module';
 import { ProductsModule } from './products/products.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -29,7 +28,6 @@ import { SearchModule } from './search/search.module';
     ReactionsModule,
     ReportsModule,
     PhotosModule,
-    BusinessClaimsModule,
     SavedModule,
     ProductsModule,
     NotificationsModule,

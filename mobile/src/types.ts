@@ -156,21 +156,6 @@ export interface Product {
   createdAt: string;
 }
 
-export type BusinessClaimStatus = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
-
-export interface BusinessClaim {
-  id: string;
-  businessId: string;
-  userId: string;
-  message: string | null;
-  status: BusinessClaimStatus;
-  reviewedById: string | null;
-  reviewedAt: string | null;
-  createdAt: string;
-  user: { id: string; username: string };
-  business: { id: string; name: string };
-}
-
 export interface BusinessDetail {
   id: string;
   category: BusinessCategory;
